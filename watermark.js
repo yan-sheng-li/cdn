@@ -7,7 +7,7 @@
 
     // 设置右下角悬浮图片、链接的配置
     const floatingImage = {
-        src: 'http://cdn.qiniu.liyansheng.top/img/pngsucai_5912822_27e612.png',  // 图片的 URL
+        src: 'http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png',  // 图片的 URL
         alt: 'Logo',  // 图片的替代文字
         width: '120px',  // 图片宽度
         height: '120px',  // 图片高度
