@@ -1,0 +1,56 @@
+{
+    "products": [
+        {
+            "id": 1,
+            "name": "手机",
+            "brand": "品牌A",
+            "price": 2999.99,
+            "category": "电子产品",
+            "inStock": true,
+            "features": ["4G", "64GB 存储", "黑色"],
+            "ratings": {
+                "average": 4.5,
+                "count": 1200
+            }
+        },
+        {
+            "id": 2,
+            "name": "笔记本电脑",
+            "brand": "品牌B",
+            "price": 5999.99,
+            "category": "电子产品",
+            "inStock": false,
+            "features": ["16GB 内存", "512GB SSD", "银色"],
+            "ratings": {
+                "average": 4.7,
+                "count": 850
+            }
+        },
+        {
+            "id": 3,
+            "name": "蓝牙耳机",
+            "brand": "品牌C",
+            "price": 799.99,
+            "category": "音响设备",
+            "inStock": true,
+            "features": ["降噪", "10小时续航", "黑色"],
+            "ratings": {
+                "average": 4.2,
+                "count": 400
+            }
+        },
+        {
+            "id": 4,
+            "name": "智能手表",
+            "brand": "品牌D",
+            "price": 1299.99,
+            "category": "穿戴设备",
+            "inStock": true,
+            "features": ["心率监测", "防水", "多种表盘"],
+            "ratings": {
+                "average": 4.8,
+                "count": 600
+            }
+        }
+    ]
+}
