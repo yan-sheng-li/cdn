@@ -1,6 +1,6 @@
 (function () {
     // 设置水印文本内容，可以设置为两行或更多
-    const watermarkText = ['项目定做、远程调试', 'www.liyansheng.top'];  // 水印内容数组，第一行和第二行文字
+    const watermarkText = ['【木子空间】项目定做、远程调试', 'www.liyansheng.top'];  // 水印内容数组，第一行和第二行文字
 
     // 设置水印透明度（值越小透明度越高）
     const watermarkOpacity = 0.35;
