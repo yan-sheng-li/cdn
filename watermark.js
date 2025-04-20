@@ -104,7 +104,7 @@
 
         // 点击广告时跳转到指定链接
         adContainer.addEventListener('click', () => {
-            window.location.href = 'https://example.com/redpacket';  // 替换成你广告的目标链接
+            window.location.href = 'https://www.liyansheng.top/blog/remote_help/';  // 替换成你广告的目标链接
         });
 
         // 将广告容器添加到页面的body中
