@@ -15,6 +15,7 @@
         linkText: '前往🚀木子空间'  // 链接文本
     };
 
+    // 创建水印
     function createWatermark() {
         // 创建水印容器，用来包裹水印元素
         const watermarkContainer = document.createElement('div');
@@ -57,7 +58,7 @@
         // 创建右下角悬浮图片、文字和链接
         const floatingContainer = document.createElement('div');
         floatingContainer.style.position = 'fixed';  // 固定定位
-        floatingContainer.style.bottom = '20px';  // 距离底部 20px
+        floatingContainer.style.bottom = '120px';  // 距离底部 120px，避免完全靠近右下角
         floatingContainer.style.right = '20px';  // 距离右侧 20px
         floatingContainer.style.zIndex = '10000';  // 确保悬浮元素位于最上层
         floatingContainer.style.textAlign = 'center';  // 文字居中对齐
@@ -70,7 +71,6 @@
         img.style.width = floatingImage.width;  // 设置图片宽度
         img.style.height = floatingImage.height;  // 设置图片高度
         img.style.display = 'block';  // 使图片成为块级元素，保证文字在下面
-
 
         // 创建链接元素
         const link = document.createElement('a');
@@ -87,6 +87,28 @@
 
         // 将悬浮容器添加到页面的body中
         document.body.appendChild(floatingContainer);
+
+        // 创建广告容器
+        const adContainer = document.createElement('div');
+        adContainer.style.position = 'fixed';  // 固定定位
+        adContainer.style.bottom = '70px';  // 距离底部 70px，避免与浮动元素重叠
+        adContainer.style.right = '20px';  // 距离右侧 20px
+        adContainer.style.zIndex = '10000';  // 确保广告位于最上层
+        adContainer.style.backgroundColor = '#ff8c00';  // 设置广告的背景颜色（橙色）
+        adContainer.style.padding = '10px 20px';  // 给广告容器添加一些内边距
+        adContainer.style.borderRadius = '8px';  // 边角圆滑
+        adContainer.style.color = '#fff';  // 文字颜色为白色
+        adContainer.style.fontSize = '16px';  // 设置字体大小
+        adContainer.style.cursor = 'pointer';  // 鼠标悬停时显示为指针样式
+        adContainer.textContent = '😃帮我推荐同学，返现8%，最高100';  // 广告内容
+
+        // 点击广告时跳转到指定链接
+        adContainer.addEventListener('click', () => {
+            window.location.href = 'https://example.com/redpacket';  // 替换成你广告的目标链接
+        });
+
+        // 将广告容器添加到页面的body中
+        document.body.appendChild(adContainer);
     }
 
     // 页面加载完成后调用 createWatermark 方法
