@@ -12,7 +12,7 @@
         width: '120px',  // 图片宽度
         height: '120px',  // 图片高度
         link: 'https://www.liyansheng.top',  // 点击图片或链接跳转的目标 URL
-        linkText: '点击前往->作者站点'  // 链接文本
+        linkText: '前往🚀木子空间'  // 链接文本
     };
 
     function createWatermark() {
