@@ -1,3 +1,6 @@
+## 随机头像
+https://api.dicebear.com/7.x/avataaars/svg?seed=
+
 ## 获取天气数据
 接口：http://t.weather.itboy.net/api/weather/city/101010100
 参数：后面接城市代码
