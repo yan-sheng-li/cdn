@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>木子空间-图片排版工具</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background-color: #f2f2f2;
+    }
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      padding: 20px;
+      background: white;
+      margin-top: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .upload-area {
+      border: 2px dashed #aaa;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .images {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+    .image-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 100%; /* 1:1 aspect ratio */
+      overflow: hidden;
+      border-radius: 8px;
+      background: #f9f9f9;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .image-wrapper img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="upload-area" id="upload-area">
+    拖拽图片到此处，或粘贴图片（Ctrl+V）
+  </div>
+  <div class="images" id="image-container"></div>
+</div>
+
+<script>
+  const uploadArea = document.getElementById('upload-area');
+  const imageContainer = document.getElementById('image-container');
+
+  function handleImage(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'image-wrapper';
+
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.draggable = true;
+      img.ondragstart = e => {
+        e.dataTransfer.setData('text/plain', '');
+      };
+      img.ondragend = e => {
+        const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+        if (!imageContainer.contains(dropTarget)) {
+          wrapper.remove();
+        }
+      };
+
+      wrapper.appendChild(img);
+      imageContainer.appendChild(wrapper);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#00aaff';
+  });
+
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.borderColor = '#aaa';
+  });
+
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#aaa';
+    if (e.dataTransfer.files) {
+      [...e.dataTransfer.files].forEach(file => {
+        if (file.type.startsWith('image/')) {
+          handleImage(file);
+        }
+      });
+    }
+  });
+
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        handleImage(file);
+      }
+    }
+  });
+</script>
+</body>
+</html>
