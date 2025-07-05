@@ -1,3 +1,7 @@
+## 快捷
+[图片自动缩放到 820x820 像素](https://www.liyansheng.top/cdn/ImageResizer.html)
+
+
 ## 支持的文件类型
 
 1. **HTML 文件**：
