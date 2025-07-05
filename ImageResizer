@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图片自适应缩放工具</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 50px;
+    }
+    #canvas {
+      border: 1px solid red;
+      margin-top: 20px;
+    }
+    #message {
+      margin-top: 10px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h2>粘贴图片自动缩放到 820x820 像素</h2>
+  <p>请复制并粘贴图片到此页面（Ctrl+V）</p>
+  <canvas id="canvas" width="820" height="820"></canvas>
+  <div id="message"></div>
+
+  <script>
+    document.addEventListener('paste', function (e) {
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          const reader = new FileReader();
+
+          reader.onload = function (event) {
+            const img = new Image();
+            img.onload = function () {
+              const canvas = document.getElementById('canvas');
+              const ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, 820, 820);
+
+              // 计算缩放比例和居中位置
+              const scale = Math.min(820 / img.width, 820 / img.height);
+              const newWidth = img.width * scale;
+              const newHeight = img.height * scale;
+              const dx = (820 - newWidth) / 2;
+              const dy = (820 - newHeight) / 2;
+
+              ctx.drawImage(img, dx, dy, newWidth, newHeight);
+              document.getElementById('message').textContent = '图片已成功缩放并居中显示。';
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
