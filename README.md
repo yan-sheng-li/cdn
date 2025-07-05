@@ -1,6 +1,8 @@
 ## 快捷
-[图片自动缩放到 820x820 像素](https://www.liyansheng.top/cdn/ImageResizer.html)
-
+- [图片自动缩放到 820x820 像素](https://www.liyansheng.top/cdn/ImageResizer)
+- [演示白板](https://www.liyansheng.top/cdn/demo)
+- [图片排版](https://www.liyansheng.top/cdn/picture_layout)
+- [自定义水印](https://www.liyansheng.top/cdn/watermark.js)
 
 ## 支持的文件类型
 
