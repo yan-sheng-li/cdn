@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情页</title>
+    <!-- 在<head>标签内追加样式 -->
+    <style>
+        .details-container {
+            width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fff;
+            padding: 20px 0;
+        }
+        .image-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .image-list img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .paste-tip {
+            color: #888;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 在<body>标签内追加内容 -->
+    <div class="details-container">
+        <h1>效果图</h1>
+        <div class="paste-tip">可直接复制粘贴图片到此区域自动追加</div>
+        <button id="copyAllBtn" style="margin-bottom:16px;">一键复制全部图片</button>
+        <div class="image-list" id="imageList"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        // 支持粘贴图片自动追加
+        document.querySelector('.details-container').addEventListener('paste', function(e) {
+            const items = (e.clipboardData || window.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        document.getElementById('imageList').appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        // 一键复制全部图片为一张图片
+        document.getElementById('copyAllBtn').onclick = function() {
+            const imageList = document.getElementById('imageList');
+            html2canvas(imageList, {backgroundColor: '#fff'}).then(canvas => {
+                canvas.toBlob(blob => {
+                    // 复制到剪贴板
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        alert('已复制到剪贴板，可直接粘贴');
+                    } else {
+                        // 下载保存
+                        const link = document.createElement('a');
+                        link.download = 'all-images.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                        alert('已保存图片');
+                    }
+                });
+            });
+        };
+    </script>
+</body>
+</html>
