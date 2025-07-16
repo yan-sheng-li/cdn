@@ -60,37 +60,53 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
-        // 支持粘贴图片自动追加
-        document.querySelector('.details-container').addEventListener('paste', function (e) {
-            const items = (e.clipboardData || window.clipboardData).items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') !== -1) {
-                    const file = items[i].getAsFile();
-                    const reader = new FileReader();
-                    reader.onload = function (event) {
-                        const img = document.createElement('img');
-                        img.src = event.target.result;
-                        document.getElementById('imageList').appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-        });
+        let imageCount = 1; // 全局图片编号
 
         // 解析Markdown图片链接并追加图片
         document.getElementById('parseMdBtn').onclick = function () {
             const mdText = document.getElementById('mdInput').value;
-            // 匹配所有Markdown图片链接
             const regex = /!\[.*?\]\((.*?)\)/g;
             let match;
             const imageList = document.getElementById('imageList');
             while ((match = regex.exec(mdText)) !== null) {
                 const url = match[1];
+                // 添加分割标题
+                const label = document.createElement('div');
+                label.textContent = `图${imageCount}`;
+                label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
+                imageList.appendChild(label);
+
                 const img = document.createElement('img');
                 img.src = url;
                 imageList.appendChild(img);
+                imageCount++;
             }
         };
+
+        // 支持粘贴图片自动追加
+        document.querySelector('.details-container').addEventListener('paste', function (e) {
+            const items = (e.clipboardData || window.clipboardData).items;
+            const imageList = document.getElementById('imageList');
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        // 添加分割标题
+                        const label = document.createElement('div');
+                        label.textContent = `图${imageCount}`;
+                        label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
+                        imageList.appendChild(label);
+
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        imageList.appendChild(img);
+                        imageCount++;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
 
         // 一键复制全部图片为一张图片
         document.getElementById('copyAllBtn').onclick = function () {
@@ -98,13 +114,35 @@
             html2canvas(imageList, {
                 backgroundColor: '#fff',
                 useCORS: true,
-                width: 850
+                width: 1200
             }).then(canvas => {
+                // 在canvas上加斜着的大号重复水印
+                const ctx = canvas.getContext('2d');
+                ctx.save();
+                ctx.rotate(-Math.PI / 6); // 斜着，-30度
+
+                const watermarkText = '© 木子空间';
+                ctx.font = 'bold 100px Arial';
+                ctx.fillStyle = 'rgba(200,0,0,0.12)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // 间隔距离
+                const xStep = 800;
+                const yStep = 600;
+                // 由于旋转后坐标系变化，需遍历更大范围
+                for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
+                    for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
+                        ctx.fillText(watermarkText, x, y);
+                    }
+                }
+                ctx.restore();
+
                 canvas.toBlob(async (blob) => {
                     if (navigator.clipboard && window.ClipboardItem) {
                         try {
                             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板';
+                            document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板（含水印）';
                         } catch (err) {
                             document.getElementsByTagName('p')[0].innerText = '复制失败，请检查浏览器权限或使用最新版 Chrome/Edge';
                         }
@@ -113,7 +151,7 @@
                         link.download = 'all-images.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
-                        document.getElementsByTagName('p')[0].innerText = '已保存图片';
+                        document.getElementsByTagName('p')[0].innerText = '已保存图片（含水印）';
                     }
                 }, 'image/png');
             });
