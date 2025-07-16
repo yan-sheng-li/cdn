@@ -45,6 +45,8 @@
     <div class="details-container">
         <h1>效果图</h1>
         <div class="paste-tip">可直接复制粘贴图片到此区域自动追加</div>
+        <textarea id="mdInput" rows="6" style="width:90%;max-width:800px;margin-bottom:12px;" placeholder="粘贴Markdown图片链接，每行一个"></textarea>
+        <button id="parseMdBtn" style="margin-bottom:16px;">解析并追加图片</button>
         <button id="copyAllBtn" style="margin-bottom:16px;">一键复制全部图片</button>
         <p></p>
         <div class="image-list" id="imageList"></div>
@@ -68,17 +70,33 @@
             }
         });
 
+        // 解析Markdown图片链接并追加图片
+        document.getElementById('parseMdBtn').onclick = function() {
+            const mdText = document.getElementById('mdInput').value;
+            // 匹配所有Markdown图片链接
+            const regex = /!\[.*?\]\((.*?)\)/g;
+            let match;
+            const imageList = document.getElementById('imageList');
+            while ((match = regex.exec(mdText)) !== null) {
+                const url = match[1];
+                const img = document.createElement('img');
+                img.src = url;
+                imageList.appendChild(img);
+            }
+        };
+
         // 一键复制全部图片为一张图片
         document.getElementById('copyAllBtn').onclick = function() {
             const imageList = document.getElementById('imageList');
-            html2canvas(imageList, {backgroundColor: '#fff'}).then(canvas => {
+            html2canvas(imageList, {
+                backgroundColor: '#fff',
+                useCORS: true // 允许跨域加载图片
+            }).then(canvas => {
                 canvas.toBlob(blob => {
-                    // 复制到剪贴板
                     if (navigator.clipboard && window.ClipboardItem) {
                         navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                         document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板';
                     } else {
-                        // 下载保存
                         const link = document.createElement('a');
                         link.download = 'all-images.png';
                         link.href = canvas.toDataURL();
