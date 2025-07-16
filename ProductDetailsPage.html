@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             background: #fff;
             padding: 20px 0;
         }
+
         .image-list {
             width: 100%;
             display: flex;
@@ -22,17 +24,20 @@
             gap: 20px;
             align-items: center;
         }
+
         .image-list img {
             max-width: 100%;
             height: auto;
             display: block;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
+
         .paste-tip {
             color: #888;
             margin-bottom: 10px;
         }
+
         p {
             color: #db0d0d;
             font-size: 16px;
@@ -40,12 +45,14 @@
         }
     </style>
 </head>
+
 <body>
     <!-- 在<body>标签内追加内容 -->
     <div class="details-container">
         <h1>效果图</h1>
         <div class="paste-tip">可直接复制粘贴图片到此区域自动追加</div>
-        <textarea id="mdInput" rows="6" style="width:90%;max-width:800px;margin-bottom:12px;" placeholder="粘贴Markdown图片链接，每行一个"></textarea>
+        <textarea id="mdInput" rows="6" style="width:90%;max-width:800px;margin-bottom:12px;"
+            placeholder="粘贴Markdown图片链接，每行一个"></textarea>
         <button id="parseMdBtn" style="margin-bottom:16px;">解析并追加图片</button>
         <button id="copyAllBtn" style="margin-bottom:16px;">一键复制全部图片</button>
         <p></p>
@@ -54,13 +61,13 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
         // 支持粘贴图片自动追加
-        document.querySelector('.details-container').addEventListener('paste', function(e) {
+        document.querySelector('.details-container').addEventListener('paste', function (e) {
             const items = (e.clipboardData || window.clipboardData).items;
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
                     const file = items[i].getAsFile();
                     const reader = new FileReader();
-                    reader.onload = function(event) {
+                    reader.onload = function (event) {
                         const img = document.createElement('img');
                         img.src = event.target.result;
                         document.getElementById('imageList').appendChild(img);
@@ -71,7 +78,7 @@
         });
 
         // 解析Markdown图片链接并追加图片
-        document.getElementById('parseMdBtn').onclick = function() {
+        document.getElementById('parseMdBtn').onclick = function () {
             const mdText = document.getElementById('mdInput').value;
             // 匹配所有Markdown图片链接
             const regex = /!\[.*?\]\((.*?)\)/g;
@@ -86,26 +93,32 @@
         };
 
         // 一键复制全部图片为一张图片
-        document.getElementById('copyAllBtn').onclick = function() {
+        document.getElementById('copyAllBtn').onclick = function () {
             const imageList = document.getElementById('imageList');
             html2canvas(imageList, {
                 backgroundColor: '#fff',
-                useCORS: true // 允许跨域加载图片
+                useCORS: true,
+                width: 850
             }).then(canvas => {
-                canvas.toBlob(blob => {
+                canvas.toBlob(async (blob) => {
                     if (navigator.clipboard && window.ClipboardItem) {
-                        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                        document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板';
+                        try {
+                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                            document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板';
+                        } catch (err) {
+                            document.getElementsByTagName('p')[0].innerText = '复制失败，请检查浏览器权限或使用最新版 Chrome/Edge';
+                        }
                     } else {
                         const link = document.createElement('a');
                         link.download = 'all-images.png';
-                        link.href = canvas.toDataURL();
+                        link.href = canvas.toDataURL('image/png');
                         link.click();
                         document.getElementsByTagName('p')[0].innerText = '已保存图片';
                     }
-                });
+                }, 'image/png');
             });
         };
     </script>
 </body>
+
 </html>
