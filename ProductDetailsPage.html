@@ -7,7 +7,7 @@
     <!-- 在<head>标签内追加样式 -->
     <style>
         .details-container {
-            width: 1400px;
+            width: 1200px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -33,6 +33,11 @@
             color: #888;
             margin-bottom: 10px;
         }
+        p {
+            color: #db0d0d;
+            font-size: 16px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -41,6 +46,7 @@
         <h1>效果图</h1>
         <div class="paste-tip">可直接复制粘贴图片到此区域自动追加</div>
         <button id="copyAllBtn" style="margin-bottom:16px;">一键复制全部图片</button>
+        <p></p>
         <div class="image-list" id="imageList"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -70,14 +76,14 @@
                     // 复制到剪贴板
                     if (navigator.clipboard && window.ClipboardItem) {
                         navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                        alert('已复制到剪贴板，可直接粘贴');
+                        document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板';
                     } else {
                         // 下载保存
                         const link = document.createElement('a');
                         link.download = 'all-images.png';
                         link.href = canvas.toDataURL();
                         link.click();
-                        alert('已保存图片');
+                        document.getElementsByTagName('p')[0].innerText = '已保存图片';
                     }
                 });
             });
