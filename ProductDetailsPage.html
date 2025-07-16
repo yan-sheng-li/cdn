@@ -2,10 +2,9 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品详情页</title>
-    <!-- 在<head>标签内追加样式 -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片排版水印保护</title>
     <style>
         .details-container {
             width: 1200px;
@@ -43,26 +42,62 @@
             font-size: 16px;
             margin-top: 10px;
         }
+
+        .controls {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls label {
+            font-size: 14px;
+        }
+
+        .controls input[type="text"] {
+            padding: 4px 8px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        button {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
-    <!-- 在<body>标签内追加内容 -->
     <div class="details-container">
-        <h1>效果图</h1>
+        <h1>图片排版水印保护</h1>
         <div class="paste-tip">可直接复制粘贴图片到此区域自动追加</div>
+
         <textarea id="mdInput" rows="6" style="width:90%;max-width:800px;margin-bottom:12px;"
             placeholder="粘贴Markdown图片链接，每行一个"></textarea>
-        <button id="parseMdBtn" style="margin-bottom:16px;">解析并追加图片</button>
-        <button id="copyAllBtn" style="margin-bottom:16px;">一键复制全部图片</button>
+
+        <div class="controls">
+            <button id="parseMdBtn">解析并追加图片</button>
+            <button id="copyAllBtn">一键复制全部图片</button>
+            <label>
+                <input type="checkbox" id="watermarkToggle" checked />
+                添加水印
+            </label>
+            <label>
+                水印文字：
+                <input type="text" id="watermarkText" value="© 木子空间" />
+            </label>
+        </div>
+
         <p></p>
         <div class="image-list" id="imageList"></div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
-        let imageCount = 1; // 全局图片编号
+        let imageCount = 1;
 
-        // 解析Markdown图片链接并追加图片
         document.getElementById('parseMdBtn').onclick = function () {
             const mdText = document.getElementById('mdInput').value;
             const regex = /!\[.*?\]\((.*?)\)/g;
@@ -70,7 +105,7 @@
             const imageList = document.getElementById('imageList');
             while ((match = regex.exec(mdText)) !== null) {
                 const url = match[1];
-                // 添加分割标题
+
                 const label = document.createElement('div');
                 label.textContent = `图${imageCount}`;
                 label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
@@ -83,7 +118,6 @@
             }
         };
 
-        // 支持粘贴图片自动追加
         document.querySelector('.details-container').addEventListener('paste', function (e) {
             const items = (e.clipboardData || window.clipboardData).items;
             const imageList = document.getElementById('imageList');
@@ -92,7 +126,6 @@
                     const file = items[i].getAsFile();
                     const reader = new FileReader();
                     reader.onload = function (event) {
-                        // 添加分割标题
                         const label = document.createElement('div');
                         label.textContent = `图${imageCount}`;
                         label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
@@ -108,50 +141,49 @@
             }
         });
 
-        // 一键复制全部图片为一张图片
         document.getElementById('copyAllBtn').onclick = function () {
             const imageList = document.getElementById('imageList');
+            const addWatermark = document.getElementById('watermarkToggle').checked;
+            const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
+
             html2canvas(imageList, {
                 backgroundColor: '#fff',
                 useCORS: true,
                 width: 1200
             }).then(canvas => {
-                // 在canvas上加斜着的大号重复水印
-                const ctx = canvas.getContext('2d');
-                ctx.save();
-                ctx.rotate(-Math.PI / 6); // 斜着，-30度
+                if (addWatermark) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.save();
+                    ctx.rotate(-Math.PI / 6); // -30度斜着
+                    ctx.font = 'bold 100px Arial';
+                    ctx.fillStyle = 'rgba(200,0,0,0.12)';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
 
-                const watermarkText = '© 木子空间';
-                ctx.font = 'bold 100px Arial';
-                ctx.fillStyle = 'rgba(200,0,0,0.12)';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                // 间隔距离
-                const xStep = 800;
-                const yStep = 600;
-                // 由于旋转后坐标系变化，需遍历更大范围
-                for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
-                    for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
-                        ctx.fillText(watermarkText, x, y);
+                    const xStep = 800;
+                    const yStep = 600;
+                    for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
+                        for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
+                            ctx.fillText(watermarkText, x, y);
+                        }
                     }
+                    ctx.restore();
                 }
-                ctx.restore();
 
                 canvas.toBlob(async (blob) => {
                     if (navigator.clipboard && window.ClipboardItem) {
                         try {
                             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            document.getElementsByTagName('p')[0].innerText = '已复制全部图片到剪贴板（含水印）';
+                            document.querySelector('p').innerText = '已复制全部图片到剪贴板（' + (addWatermark ? '含水印' : '无水印') + '）';
                         } catch (err) {
-                            document.getElementsByTagName('p')[0].innerText = '复制失败，请检查浏览器权限或使用最新版 Chrome/Edge';
+                            document.querySelector('p').innerText = '复制失败，请检查浏览器权限或使用最新版 Chrome/Edge';
                         }
                     } else {
                         const link = document.createElement('a');
                         link.download = 'all-images.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
-                        document.getElementsByTagName('p')[0].innerText = '已保存图片（含水印）';
+                        document.querySelector('p').innerText = '已保存图片（' + (addWatermark ? '含水印' : '无水印') + '）';
                     }
                 }, 'image/png');
             });
