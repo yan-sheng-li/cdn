@@ -3,6 +3,7 @@
 - [演示白板](https://www.liyansheng.top/cdn/demo)
 - [图片排版](https://www.liyansheng.top/cdn/picture_layout)
 - [自定义水印](https://www.liyansheng.top/cdn/watermark.js)
+- [自定义水印](https://www.liyansheng.top/cdn/ProductDetailsPage)
 
 ## 支持的文件类型
 
