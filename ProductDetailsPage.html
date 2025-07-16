@@ -80,6 +80,7 @@
         <div class="controls">
             <button id="parseMdBtn">解析并追加图片</button>
             <button id="copyAllBtn">一键复制全部图片</button>
+            <button id="clearBtn">清空</button>
             <label>
                 <input type="checkbox" id="watermarkToggle" checked />
                 添加水印
@@ -187,6 +188,21 @@
                     }
                 }, 'image/png');
             });
+        };
+
+        document.getElementById('clearBtn').onclick = function () {
+            // 清空输入框
+            document.getElementById('mdInput').value = '';
+
+            // 清空图片列表
+            const imageList = document.getElementById('imageList');
+            imageList.innerHTML = '';
+
+            // 清空提示信息
+            document.querySelector('p').innerText = '';
+
+            // 重置图片计数
+            imageCount = 1;
         };
     </script>
 </body>
