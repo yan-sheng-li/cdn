@@ -66,6 +66,16 @@
             font-size: 14px;
             cursor: pointer;
         }
+
+        .save-btn {
+            margin-top: 8px;
+            font-size: 13px;
+            padding: 4px 10px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            color: white;
+        }
     </style>
 </head>
 
@@ -99,43 +109,51 @@
     <script>
         let imageCount = 1;
 
+        function addImageWithSaveButton(src) {
+            const imageList = document.getElementById('imageList');
+
+            const label = document.createElement('div');
+            label.textContent = `图${imageCount}`;
+            label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
+            imageList.appendChild(label);
+
+            const img = document.createElement('img');
+            img.src = src;
+
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.alignItems = 'center';
+            wrapper.appendChild(img);
+
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = '保存该图';
+            saveBtn.className = 'save-btn';
+            saveBtn.onclick = () => saveSingleImage(img);
+            wrapper.appendChild(saveBtn);
+
+            imageList.appendChild(wrapper);
+            imageCount++;
+        }
+
         document.getElementById('parseMdBtn').onclick = function () {
             const mdText = document.getElementById('mdInput').value;
             const regex = /!\[.*?\]\((.*?)\)/g;
             let match;
-            const imageList = document.getElementById('imageList');
             while ((match = regex.exec(mdText)) !== null) {
-                const url = match[1];
-
-                const label = document.createElement('div');
-                label.textContent = `图${imageCount}`;
-                label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
-                imageList.appendChild(label);
-
-                const img = document.createElement('img');
-                img.src = url;
-                imageList.appendChild(img);
-                imageCount++;
+                addImageWithSaveButton(match[1]);
             }
         };
 
         document.querySelector('.details-container').addEventListener('paste', function (e) {
             const items = (e.clipboardData || window.clipboardData).items;
-            const imageList = document.getElementById('imageList');
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
                     const file = items[i].getAsFile();
                     const reader = new FileReader();
                     reader.onload = function (event) {
-                        const label = document.createElement('div');
-                        label.textContent = `图${imageCount}`;
-                        label.style = "font-weight:bold;font-size:16px;margin:16px 0 8px 0;width:100%;text-align:left;";
-                        imageList.appendChild(label);
-
-                        const img = document.createElement('img');
-                        img.src = event.target.result;
-                        imageList.appendChild(img);
-                        imageCount++;
+                        addImageWithSaveButton(event.target.result);
                     };
                     reader.readAsDataURL(file);
                 }
@@ -155,7 +173,7 @@
                 if (addWatermark) {
                     const ctx = canvas.getContext('2d');
                     ctx.save();
-                    ctx.rotate(-Math.PI / 6); // -30度斜着
+                    ctx.rotate(-Math.PI / 6);
                     ctx.font = 'bold 100px Arial';
                     ctx.fillStyle = 'rgba(200,0,0,0.08)';
                     ctx.textAlign = 'center';
@@ -190,18 +208,44 @@
             });
         };
 
+        function saveSingleImage(imgElement) {
+            const addWatermark = document.getElementById('watermarkToggle').checked;
+            const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
+
+            html2canvas(imgElement, {
+                backgroundColor: '#fff',
+                useCORS: true
+            }).then(canvas => {
+                if (addWatermark) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.save();
+                    ctx.rotate(-Math.PI / 6);
+                    ctx.font = 'bold 60px Arial';
+                    ctx.fillStyle = 'rgba(200,0,0,0.08)';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const xStep = 400;
+                    const yStep = 300;
+                    for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
+                        for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
+                            ctx.fillText(watermarkText, x, y);
+                        }
+                    }
+                    ctx.restore();
+                }
+
+                const link = document.createElement('a');
+                link.download = 'image-' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
         document.getElementById('clearBtn').onclick = function () {
-            // 清空输入框
             document.getElementById('mdInput').value = '';
-
-            // 清空图片列表
-            const imageList = document.getElementById('imageList');
-            imageList.innerHTML = '';
-
-            // 清空提示信息
+            document.getElementById('imageList').innerHTML = '';
             document.querySelector('p').innerText = '';
-
-            // 重置图片计数
             imageCount = 1;
         };
     </script>
