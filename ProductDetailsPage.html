@@ -179,32 +179,58 @@
             });
         }
 
-        function renderCanvasWithWatermark(element) {
-            const addWatermark = document.getElementById('watermarkToggle').checked;
-            const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
+        function renderCanvasWithWatermark(imgElement) {
+            return new Promise((resolve, reject) => {
+                const addWatermark = document.getElementById('watermarkToggle').checked;
+                const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
 
-            return html2canvas(element, { backgroundColor: '#fff', useCORS: true }).then(canvas => {
-                if (addWatermark) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.save();
-                    ctx.rotate(-Math.PI / 6);
-                    ctx.font = 'bold 60px Arial';
-                    ctx.fillStyle = 'rgba(200,0,0,0.08)';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    const xStep = 400;
-                    const yStep = 300;
-                    for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
-                        for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
-                            ctx.fillText(watermarkText, x, y);
-                        }
-                    }
-                    ctx.restore();
+                if (!imgElement || !imgElement.src) {
+                    console.warn('传入的 imgElement 无效或没有 src：', imgElement);
+                    reject(new Error('传入的 imgElement 无效或未加载完成'));
+                    return;
                 }
-                return canvas;
+
+                const image = new Image();
+                image.crossOrigin = 'anonymous';
+                image.src = imgElement.src;
+
+                image.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.drawImage(image, 0, 0);
+
+                    if (addWatermark) {
+                        ctx.save();
+                        ctx.rotate(-Math.PI / 6);
+                        ctx.font = 'bold 60px Arial';
+                        ctx.fillStyle = 'rgba(200,0,0,0.08)';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const xStep = 400;
+                        const yStep = 300;
+                        for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
+                            for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
+                                ctx.fillText(watermarkText, x, y);
+                            }
+                        }
+
+                        ctx.restore();
+                    }
+
+                    resolve(canvas);
+                };
+
+                image.onerror = function () {
+                    reject(new Error('图片加载失败，可能跨域或链接失效'));
+                };
             });
         }
+
+
 
         function exportFullImageToClipboardOrDownload(toClipboard = false) {
             const imageList = document.getElementById('imageList');
@@ -228,25 +254,60 @@
         document.getElementById('exportZipBtn').onclick = async function () {
             const zip = new JSZip();
             const allImgs = document.querySelectorAll('#imageList img');
-            const fullImageContainer = document.getElementById('imageList');
 
-            // 单张图
             for (let i = 0; i < allImgs.length; i++) {
-                const canvas = await renderCanvasWithWatermark(allImgs[i]);
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                zip.file(`img${i + 1}.png`, blob);  // 使用英文文件名
+                const img = allImgs[i];
+                try {
+                    const canvas = await renderCanvasWithWatermark(img);
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    zip.file(`img${i + 1}.png`, blob);
+                } catch (e) {
+                    console.error(`图 ${i + 1} 加水印失败：`, e);
+                }
             }
 
-            // 整张图
-            const fullCanvas = await renderCanvasWithWatermark(fullImageContainer);
-            const fullBlob = await new Promise(resolve => fullCanvas.toBlob(resolve, 'image/png'));
-            zip.file(`all-images.png`, fullBlob);  // 使用英文文件名
+            // 拼图仍使用 html2canvas 截图容器
+            try {
+                const fullImageContainer = document.getElementById('imageList');
+                const fullCanvas = await html2canvas(fullImageContainer, {
+                    backgroundColor: '#fff',
+                    useCORS: true
+                });
 
-            // 下载
+                const ctx = fullCanvas.getContext('2d');
+                const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
+                const addWatermark = document.getElementById('watermarkToggle').checked;
+
+                if (addWatermark) {
+                    ctx.save();
+                    ctx.rotate(-Math.PI / 6);
+                    ctx.font = 'bold 60px Arial';
+                    ctx.fillStyle = 'rgba(200,0,0,0.08)';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const xStep = 400;
+                    const yStep = 300;
+                    for (let x = -fullCanvas.width; x < fullCanvas.width * 2; x += xStep) {
+                        for (let y = -fullCanvas.height; y < fullCanvas.height * 2; y += yStep) {
+                            ctx.fillText(watermarkText, x, y);
+                        }
+                    }
+
+                    ctx.restore();
+                }
+
+                const fullBlob = await new Promise(resolve => fullCanvas.toBlob(resolve, 'image/png'));
+                zip.file(`all-images.png`, fullBlob);
+            } catch (e) {
+                console.error('拼图加水印失败：', e);
+            }
+
             zip.generateAsync({ type: "blob" }).then(content => {
                 saveAs(content, "images.zip");
             });
         };
+
 
 
         document.getElementById('clearBtn').onclick = function () {
