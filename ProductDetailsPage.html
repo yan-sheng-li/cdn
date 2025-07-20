@@ -90,6 +90,7 @@
         <div class="controls">
             <button id="parseMdBtn">解析并追加图片</button>
             <button id="copyAllBtn">一键复制全部图片</button>
+            <button id="exportZipBtn">一键打包导出</button>
             <button id="clearBtn">清空</button>
             <label>
                 <input type="checkbox" id="watermarkToggle" checked />
@@ -105,7 +106,11 @@
         <div class="image-list" id="imageList"></div>
     </div>
 
+    <!-- 依赖库 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script>
         let imageCount = 1;
 
@@ -121,7 +126,6 @@
             img.src = src;
 
             const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
             wrapper.style.display = 'flex';
             wrapper.style.flexDirection = 'column';
             wrapper.style.alignItems = 'center';
@@ -161,61 +165,25 @@
         });
 
         document.getElementById('copyAllBtn').onclick = function () {
-            const imageList = document.getElementById('imageList');
-            const addWatermark = document.getElementById('watermarkToggle').checked;
-            const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
-
-            html2canvas(imageList, {
-                backgroundColor: '#fff',
-                useCORS: true,
-                width: 1200
-            }).then(canvas => {
-                if (addWatermark) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.save();
-                    ctx.rotate(-Math.PI / 6);
-                    ctx.font = 'bold 100px Arial';
-                    ctx.fillStyle = 'rgba(200,0,0,0.08)';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    const xStep = 800;
-                    const yStep = 600;
-                    for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
-                        for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
-                            ctx.fillText(watermarkText, x, y);
-                        }
-                    }
-                    ctx.restore();
-                }
-
-                canvas.toBlob(async (blob) => {
-                    if (navigator.clipboard && window.ClipboardItem) {
-                        try {
-                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            document.querySelector('p').innerText = '已复制全部图片到剪贴板（' + (addWatermark ? '含水印' : '无水印') + '）';
-                        } catch (err) {
-                            document.querySelector('p').innerText = '复制失败，请检查浏览器权限或使用最新版 Chrome/Edge';
-                        }
-                    } else {
-                        const link = document.createElement('a');
-                        link.download = 'all-images.png';
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                        document.querySelector('p').innerText = '已保存图片（' + (addWatermark ? '含水印' : '无水印') + '）';
-                    }
-                }, 'image/png');
-            });
+            exportFullImageToClipboardOrDownload(true);
         };
 
         function saveSingleImage(imgElement) {
+            renderCanvasWithWatermark(imgElement).then(canvas => {
+                canvas.toBlob(blob => {
+                    const link = document.createElement('a');
+                    link.download = 'image-' + Date.now() + '.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                });
+            });
+        }
+
+        function renderCanvasWithWatermark(element) {
             const addWatermark = document.getElementById('watermarkToggle').checked;
             const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
 
-            html2canvas(imgElement, {
-                backgroundColor: '#fff',
-                useCORS: true
-            }).then(canvas => {
+            return html2canvas(element, { backgroundColor: '#fff', useCORS: true }).then(canvas => {
                 if (addWatermark) {
                     const ctx = canvas.getContext('2d');
                     ctx.save();
@@ -234,13 +202,52 @@
                     }
                     ctx.restore();
                 }
-
-                const link = document.createElement('a');
-                link.download = 'image-' + Date.now() + '.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                return canvas;
             });
         }
+
+        function exportFullImageToClipboardOrDownload(toClipboard = false) {
+            const imageList = document.getElementById('imageList');
+            renderCanvasWithWatermark(imageList).then(canvas => {
+                canvas.toBlob(async blob => {
+                    if (toClipboard && navigator.clipboard && window.ClipboardItem) {
+                        try {
+                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                            document.querySelector('p').innerText = '已复制全部图片到剪贴板（含/不含水印）';
+                        } catch {
+                            document.querySelector('p').innerText = '复制失败，已改为下载图片';
+                            saveAs(blob, 'all-images.png');
+                        }
+                    } else {
+                        saveAs(blob, 'all-images.png');
+                    }
+                });
+            });
+        }
+
+        document.getElementById('exportZipBtn').onclick = async function () {
+            const zip = new JSZip();
+            const allImgs = document.querySelectorAll('#imageList img');
+            const fullImageContainer = document.getElementById('imageList');
+
+            // 单张图
+            for (let i = 0; i < allImgs.length; i++) {
+                const canvas = await renderCanvasWithWatermark(allImgs[i]);
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                zip.file(`img${i + 1}.png`, blob);  // 使用英文文件名
+            }
+
+            // 整张图
+            const fullCanvas = await renderCanvasWithWatermark(fullImageContainer);
+            const fullBlob = await new Promise(resolve => fullCanvas.toBlob(resolve, 'image/png'));
+            zip.file(`all-images.png`, fullBlob);  // 使用英文文件名
+
+            // 下载
+            zip.generateAsync({ type: "blob" }).then(content => {
+                saveAs(content, "images.zip");
+            });
+        };
+
 
         document.getElementById('clearBtn').onclick = function () {
             document.getElementById('mdInput').value = '';
