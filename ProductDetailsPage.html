@@ -92,6 +92,7 @@
             <button id="copyAllBtn">一键复制全部图片</button>
             <button id="exportZipBtn">一键打包导出</button>
             <button id="clearBtn">清空</button>
+
             <label>
                 <input type="checkbox" id="watermarkToggle" checked />
                 添加水印
@@ -99,6 +100,14 @@
             <label>
                 水印文字：
                 <input type="text" id="watermarkText" value="© 木子空间" />
+            </label>
+            <label>
+                横向间距：
+                <input type="number" id="watermarkXStep" value="600" style="width: 80px;" />
+            </label>
+            <label>
+                纵向间距：
+                <input type="number" id="watermarkYStep" value="500" style="width: 80px;" />
             </label>
         </div>
 
@@ -210,8 +219,8 @@
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
 
-                        const xStep = 400;
-                        const yStep = 300;
+                        const xStep = parseInt(document.getElementById('watermarkXStep').value) || 400;
+                        const yStep = parseInt(document.getElementById('watermarkYStep').value) || 300;
                         for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
                             for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
                                 ctx.fillText(watermarkText, x, y);
@@ -286,8 +295,8 @@
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    const xStep = 400;
-                    const yStep = 300;
+                    const xStep = parseInt(document.getElementById('watermarkXStep').value) || 400;
+                    const yStep = parseInt(document.getElementById('watermarkYStep').value) || 300;
                     for (let x = -fullCanvas.width; x < fullCanvas.width * 2; x += xStep) {
                         for (let y = -fullCanvas.height; y < fullCanvas.height * 2; y += yStep) {
                             ctx.fillText(watermarkText, x, y);
