@@ -92,7 +92,8 @@
             <button id="copyAllBtn">一键复制全部图片</button>
             <button id="exportZipBtn">一键打包导出</button>
             <button id="clearBtn">清空</button>
-
+        </div>
+        <div>
             <label>
                 <input type="checkbox" id="watermarkToggle" checked />
                 添加水印
@@ -149,6 +150,38 @@
             imageList.appendChild(wrapper);
             imageCount++;
         }
+
+        function renderContainerWithWatermark(containerElement) {
+            const addWatermark = document.getElementById('watermarkToggle').checked;
+            const watermarkText = document.getElementById('watermarkText').value || '© 木子空间';
+            const xStep = parseInt(document.getElementById('watermarkXStep').value) || 400;
+            const yStep = parseInt(document.getElementById('watermarkYStep').value) || 300;
+
+            return html2canvas(containerElement, {
+                backgroundColor: '#fff',
+                useCORS: true
+            }).then(canvas => {
+                if (addWatermark) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.save();
+                    ctx.rotate(-Math.PI / 6);
+                    ctx.font = 'bold 60px Arial';
+                    ctx.fillStyle = 'rgba(200,0,0,0.08)';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    for (let x = -canvas.width; x < canvas.width * 2; x += xStep) {
+                        for (let y = -canvas.height; y < canvas.height * 2; y += yStep) {
+                            ctx.fillText(watermarkText, x, y);
+                        }
+                    }
+
+                    ctx.restore();
+                }
+                return canvas;
+            });
+        }
+
 
         document.getElementById('parseMdBtn').onclick = function () {
             const mdText = document.getElementById('mdInput').value;
@@ -243,12 +276,14 @@
 
         function exportFullImageToClipboardOrDownload(toClipboard = false) {
             const imageList = document.getElementById('imageList');
-            renderCanvasWithWatermark(imageList).then(canvas => {
+
+            renderContainerWithWatermark(imageList).then(canvas => {
                 canvas.toBlob(async blob => {
                     if (toClipboard && navigator.clipboard && window.ClipboardItem) {
                         try {
                             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            document.querySelector('p').innerText = '已复制全部图片到剪贴板（含/不含水印）';
+                            var addWatermark = document.getElementById('watermarkToggle').checked;
+                            document.querySelector('p').innerText = '已复制全部图片到剪贴板-----------------' + (addWatermark ? '有水印' : '无水印');
                         } catch {
                             document.querySelector('p').innerText = '复制失败，已改为下载图片';
                             saveAs(blob, 'all-images.png');
@@ -257,8 +292,12 @@
                         saveAs(blob, 'all-images.png');
                     }
                 });
+            }).catch(err => {
+                console.error('拼图复制失败：', err);
+                document.querySelector('p').innerText = '复制失败，请检查图片加载是否完整';
             });
         }
+
 
         document.getElementById('exportZipBtn').onclick = async function () {
             const zip = new JSZip();
