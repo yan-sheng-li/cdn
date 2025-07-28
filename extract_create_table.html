@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>建表语句提取器</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+    textarea { width: 100%; height: 200px; margin: 10px 0; }
+    button { padding: 8px 16px; margin-right: 10px; }
+    .output { background: #f9f9f9; padding: 10px; white-space: pre-wrap; border: 1px solid #ccc; min-height: 100px; }
+    .message { color: red; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>建表语句提取工具（自动排序依赖，仅保留建表语句）</h2>
+  <label for="input">粘贴 SQL 文件内容：</label>
+  <textarea id="input" placeholder="请粘贴 SQL 内容，如 .sql 文件中复制的内容"></textarea>
+
+  <button onclick="extractCreateStatements()">提取建表语句</button>
+  <button onclick="copyToClipboard()">复制结果</button>
+  <div id="message" class="message"></div>
+
+  <h3>提取结果：</h3>
+  <div id="output" class="output"></div>
+
+  <script>
+    function extractCreateStatements() {
+      const input = document.getElementById("input").value;
+      const message = document.getElementById("message");
+      const output = document.getElementById("output");
+      message.textContent = '';
+      output.textContent = '';
+
+      // 清洗：删除注释、锁表、插入、设置等非建表语句
+      let cleanSQL = input
+        .replace(/^--.*$/gm, "")                             // 去除 -- 注释
+        .replace(/\/\*![\s\S]*?\*\//gm, "")                  // 去除 /*! ... */
+        .replace(/LOCK TABLES[\s\S]*?UNLOCK TABLES;/gm, "")  // LOCK/UNLOCK
+        .replace(/INSERT INTO[\s\S]*?;\n?/gi, "")            // INSERT
+        .replace(/ALTER TABLE[\s\S]*?;\n?/gi, "")            // ALTER
+        .replace(/DROP TABLE[\s\S]*?;\n?/gi, "")             // DROP TABLE
+        .replace(/\r/g, '');                                 // 去除回车符
+
+      // 提取所有 CREATE TABLE 语句（跨多行）
+      const createTableRegex = /CREATE TABLE\s+`?(\w+)`?\s*\([\s\S]*?\)[\s\S]*?;/gi;
+      const tables = {};
+      let match;
+
+      while ((match = createTableRegex.exec(cleanSQL)) !== null) {
+        const tableName = match[1];
+        const createSQL = match[0].trim();
+        const foreignKeys = [...createSQL.matchAll(/FOREIGN KEY\s*\(.*?\)\s*REFERENCES\s*`?(\w+)`?/gi)].map(m => m[1]);
+        tables[tableName] = { sql: createSQL, deps: foreignKeys };
+      }
+
+      const sortedTableNames = topologicalSort(tables);
+      if (sortedTableNames.length === 0) {
+        message.textContent = "⚠ 未找到任何 CREATE TABLE 语句，请检查 SQL 内容格式是否正确。";
+        return;
+      }
+
+      const result = sortedTableNames.map(name => tables[name].sql).join('\n\n');
+      output.textContent = result;
+    }
+
+    function topologicalSort(tables) {
+      const result = [];
+      const visited = new Set();
+      const temp = new Set();
+
+      function visit(name) {
+        if (visited.has(name)) return;
+        if (temp.has(name)) return; // 避免死循环
+        temp.add(name);
+        const node = tables[name];
+        if (node && node.deps.length > 0) {
+          for (const dep of node.deps) {
+            if (tables[dep]) visit(dep);
+          }
+        }
+        temp.delete(name);
+        visited.add(name);
+        result.push(name);
+      }
+
+      for (const name in tables) {
+        visit(name);
+      }
+      return result;
+    }
+
+    function copyToClipboard() {
+      const text = document.getElementById("output").textContent;
+      const message = document.getElementById("message");
+      message.textContent = '';
+      if (!text.trim()) {
+        message.textContent = "⚠ 没有内容可复制。";
+        return;
+      }
+
+      navigator.clipboard.writeText(text)
+        .then(() => message.textContent = "✅ 建表语句已复制到剪贴板。")
+        .catch(err => message.textContent = "❌ 复制失败：" + err);
+    }
+  </script>
+</body>
+</html>

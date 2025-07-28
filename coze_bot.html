@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Hello, World!</h1>
+</body>
+
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.10/libs/cn/index.js"></script>
+<script>
+    new CozeWebSDK.WebChatClient({
+        config: {
+            bot_id: '7529045912480972846',
+        },
+        componentProps: {
+            title: 'Coze',
+        },
+        auth: {
+            type: 'token',
+            token: 'pat_SGHfuhAw2jcPFy1ZgYSDffFUcz1qbdNcVfwPyQDenPk2VU3zDiowOSsVTAuBEAui',
+            onRefreshToken: function () {
+                return 'pat_SGHfuhAw2jcPFy1ZgYSDffFUcz1qbdNcVfwPyQDenPk2VU3zDiowOSsVTAuBEAui'
+            }
+        },
+        // 用户信息
+        userInfo: {
+            id: '12345',
+            url: 'http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png',
+            nickname: '木子助手',
+        },
+        ui: {
+            base: {
+                icon: 'http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png',
+                layout: 'pc',
+                zIndex: 1000,
+            }
+        },
+    });
+</script>
+
+</html>
