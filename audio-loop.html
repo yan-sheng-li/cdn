@@ -3,27 +3,78 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>音频拖拽片段播放工具（v6稳定版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频拖拽片段播放工具（手机兼容）</title>
     <style>
         body {
             font-family: sans-serif;
-            padding: 20px;
+            padding: 10px;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-align: center;
         }
 
         #waveform {
             width: 100%;
-            height: 128px;
-            margin-bottom: 10px;
+            height: 96px;
+            margin: 10px 0;
             border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
         button,
-        input {
-            margin: 5px;
+        select {
+            padding: 10px 12px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            flex: 1 1 45%;
+            min-width: 120px;
+        }
+
+        button:hover,
+        select:hover {
+            background-color: #0056b3;
+        }
+
+        label {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        select {
+            background-color: #17a2b8;
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: #555;
+            text-align: center;
         }
     </style>
 
-    <!-- Wavesurfer v6（含插件） -->
     <script src="https://unpkg.com/wavesurfer.js@6.6.0/dist/wavesurfer.min.js"></script>
     <script src="https://unpkg.com/wavesurfer.js@6.6.0/dist/plugin/wavesurfer.regions.min.js"></script>
 </head>
@@ -32,32 +83,33 @@
 
     <h2>🎵 拖拽选择播放片段</h2>
 
-    <input type="file" id="audioFile" accept="audio/*"><br>
+    <input type="file" id="audioFile" accept="audio/*">
 
     <div id="waveform"></div>
 
-    <button onclick="playRegion()">▶ 播放片段</button>
-    <button onclick="toggleLoop()">🔁 循环: <span id="loopStatus">关闭</span></button>
-    <button onclick="pause()">⏸ 暂停</button>
+    <div class="controls">
+        <button onclick="playRegion()">▶ 播放片段</button>
+        <button onclick="pause()">⏸ 暂停</button>
+        <button onclick="toggleLoop()">🔁 循环: <span id="loopStatus">关闭</span></button>
+        <select id="speedControl" title="播放速度">
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
 
-    <label for="speedControl">🎚️ 播放速度：</label>
-    <select id="speedControl">
-        <option value="0.5">0.5x</option>
-        <option value="0.75">0.75x</option>
-        <option value="1" selected>1x</option>
-        <option value="1.25">1.25x</option>
-        <option value="1.5">1.5x</option>
-    </select>
-
-    <p>提示：空格键切换播放/暂停，回车键回到片段起始点</p>
-
+    <p>📱 空格键播放/暂停，回车回到片段起点（桌面端）</p>
 
     <script>
         let wavesurfer = WaveSurfer.create({
             container: '#waveform',
             waveColor: '#ccc',
             progressColor: '#007bff',
-            height: 100,
+            height: 96,
+            normalize: true,
+            responsive: true,
             plugins: [
                 WaveSurfer.regions.create()
             ]
@@ -103,15 +155,19 @@
         function pause() {
             wavesurfer.pause();
         }
-        // 增加键盘快捷键支持
+
+        document.getElementById('speedControl').addEventListener('change', function () {
+            const speed = parseFloat(this.value);
+            wavesurfer.setPlaybackRate(speed);
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
-                e.preventDefault(); // 防止空格触发页面滚动
+                e.preventDefault();
                 if (wavesurfer.isPlaying()) {
                     wavesurfer.pause();
                 } else {
                     if (region) {
-                        // 如果播放超出区域，从头播放片段
                         const currentTime = wavesurfer.getCurrentTime();
                         if (currentTime < region.start || currentTime > region.end) {
                             wavesurfer.play(region.start, region.end);
@@ -131,14 +187,6 @@
                 }
             }
         });
-
-        // 播放速度调整
-        document.getElementById('speedControl').addEventListener('change', function () {
-            const speed = parseFloat(this.value);
-            wavesurfer.setPlaybackRate(speed);
-        });
-
-
     </script>
 </body>
 
