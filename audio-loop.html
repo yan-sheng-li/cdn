@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音频拖拽片段播放工具（手机兼容）</title>
+    <title>音频片段播放器（支持文件夹）</title>
     <style>
         body {
             font-family: sans-serif;
@@ -15,7 +15,6 @@
 
         h2 {
             font-size: 1.2rem;
-            margin-top: 10px;
             text-align: center;
         }
 
@@ -42,7 +41,7 @@
 
         button,
         select {
-            padding: 10px 12px;
+            padding: 10px;
             font-size: 1rem;
             border: none;
             border-radius: 6px;
@@ -58,14 +57,26 @@
             background-color: #0056b3;
         }
 
-        label {
-            display: block;
-            text-align: center;
-            margin-top: 10px;
-        }
-
         select {
             background-color: #17a2b8;
+        }
+
+        ul#trackList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #trackList li {
+            padding: 8px 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        #trackList li:hover {
+            background-color: #e9ecef;
         }
 
         p {
@@ -81,9 +92,13 @@
 
 <body>
 
-    <h2>🎵 拖拽选择播放片段</h2>
+    <h2>🎵 拖拽选择播放片段（支持文件夹）</h2>
 
+    <label for="audioFile">选择音频文件:</label>
     <input type="file" id="audioFile" accept="audio/*">
+
+    <label for="folderInput">选择文件夹:</label>
+    <input type="file" id="folderInput" webkitdirectory directory multiple>
 
     <div id="waveform"></div>
 
@@ -100,9 +115,13 @@
         </select>
     </div>
 
+    <p>📁 选择文件夹后，可点击曲目播放</p>
+    <ul id="trackList"></ul>
+
     <p>📱 空格键播放/暂停，回车回到片段起点（桌面端）</p>
 
     <script>
+        const supportedFormats = ['.mp3', '.wav', '.ogg', '.flac', '.m4a'];
         let wavesurfer = WaveSurfer.create({
             container: '#waveform',
             waveColor: '#ccc',
@@ -110,26 +129,25 @@
             height: 96,
             normalize: true,
             responsive: true,
-            plugins: [
-                WaveSurfer.regions.create()
-            ]
+            plugins: [WaveSurfer.regions.create()]
         });
 
         let region = null;
         let loopEnabled = false;
 
+        function loadAudioFromBlob(blob) {
+            const url = URL.createObjectURL(blob);
+            wavesurfer.load(url);
+        }
+
         document.getElementById('audioFile').addEventListener('change', function () {
             const file = this.files[0];
-            if (file) {
-                const objectUrl = URL.createObjectURL(file);
-                wavesurfer.load(objectUrl);
-            }
+            if (file) loadAudioFromBlob(file);
         });
 
         wavesurfer.on('ready', () => {
             const duration = wavesurfer.getDuration();
             if (region) region.remove();
-
             region = wavesurfer.addRegion({
                 start: 0,
                 end: Math.min(10, duration),
@@ -167,13 +185,9 @@
                 if (wavesurfer.isPlaying()) {
                     wavesurfer.pause();
                 } else {
-                    if (region) {
-                        const currentTime = wavesurfer.getCurrentTime();
-                        if (currentTime < region.start || currentTime > region.end) {
-                            wavesurfer.play(region.start, region.end);
-                        } else {
-                            wavesurfer.play();
-                        }
+                    const time = wavesurfer.getCurrentTime();
+                    if (region && (time < region.start || time > region.end)) {
+                        wavesurfer.play(region.start, region.end);
                     } else {
                         wavesurfer.play();
                     }
@@ -187,7 +201,28 @@
                 }
             }
         });
+
+        // 文件夹选择
+        document.getElementById('folderInput').addEventListener('change', function () {
+            const files = Array.from(this.files);
+            const audioFiles = files.filter(file => supportedFormats.some(ext => file.name.toLowerCase().endsWith(ext)));
+
+            const listContainer = document.getElementById('trackList');
+            listContainer.innerHTML = '';
+
+            audioFiles.forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file.webkitRelativePath || file.name;
+                li.onclick = () => loadAudioFromBlob(file);
+                listContainer.appendChild(li);
+            });
+
+            if (audioFiles.length > 0) {
+                loadAudioFromBlob(audioFiles[0]); // 自动加载第一首
+            }
+        });
     </script>
+
 </body>
 
 </html>
