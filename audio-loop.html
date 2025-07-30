@@ -40,6 +40,16 @@
     <button onclick="toggleLoop()">🔁 循环: <span id="loopStatus">关闭</span></button>
     <button onclick="pause()">⏸ 暂停</button>
 
+    <label for="speedControl">🎚️ 播放速度：</label>
+    <select id="speedControl">
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+    </select>
+
+
     <script>
         let wavesurfer = WaveSurfer.create({
             container: '#waveform',
@@ -119,6 +129,13 @@
                 }
             }
         });
+
+        // 播放速度调整
+        document.getElementById('speedControl').addEventListener('change', function () {
+            const speed = parseFloat(this.value);
+            wavesurfer.setPlaybackRate(speed);
+        });
+
 
     </script>
 </body>
