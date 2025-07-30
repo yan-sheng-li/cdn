@@ -84,6 +84,12 @@
             color: #555;
             text-align: center;
         }
+
+        #trackList li.playing {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
     </style>
 
     <script src="https://unpkg.com/wavesurfer.js@6.6.0/dist/wavesurfer.min.js"></script>
@@ -135,9 +141,32 @@
         let region = null;
         let loopEnabled = false;
 
-        function loadAudioFromBlob(blob) {
+        let currentTrackIndex = null;
+
+        function loadAudioFromBlob(blob, index = null) {
             const url = URL.createObjectURL(blob);
             wavesurfer.load(url);
+            currentTrackIndex = index;
+            highlightCurrentTrack();
+        }
+
+        // 高亮当前播放曲目
+        function highlightCurrentTrack() {
+            const listItems = document.querySelectorAll('#trackList li');
+            listItems.forEach((li, i) => {
+                if (i === currentTrackIndex) {
+                    li.classList.add('playing');
+                    if (!li.dataset.originalText) {
+                        li.dataset.originalText = li.textContent;
+                    }
+                    li.textContent = '▶ ' + li.dataset.originalText;
+                } else {
+                    li.classList.remove('playing');
+                    if (li.dataset.originalText) {
+                        li.textContent = li.dataset.originalText;
+                    }
+                }
+            });
         }
 
         document.getElementById('audioFile').addEventListener('change', function () {
@@ -210,17 +239,21 @@
             const listContainer = document.getElementById('trackList');
             listContainer.innerHTML = '';
 
-            audioFiles.forEach(file => {
+            audioFiles.forEach((file, index) => {
                 const li = document.createElement('li');
                 li.textContent = file.webkitRelativePath || file.name;
-                li.onclick = () => loadAudioFromBlob(file);
+                li.dataset.index = index;
+                li.onclick = () => {
+                    loadAudioFromBlob(file, index);
+                };
                 listContainer.appendChild(li);
             });
 
             if (audioFiles.length > 0) {
-                loadAudioFromBlob(audioFiles[0]); // 自动加载第一首
+                loadAudioFromBlob(audioFiles[0], 0); // 自动加载第一首
             }
         });
+
     </script>
 
 </body>
