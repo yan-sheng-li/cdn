@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>音频拖拽片段播放工具（v6稳定版）</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        #waveform {
+            width: 100%;
+            height: 128px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+        }
+
+        button,
+        input {
+            margin: 5px;
+        }
+    </style>
+
+    <!-- Wavesurfer v6（含插件） -->
+    <script src="https://unpkg.com/wavesurfer.js@6.6.0/dist/wavesurfer.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@6.6.0/dist/plugin/wavesurfer.regions.min.js"></script>
+</head>
+
+<body>
+
+    <h2>🎵 拖拽选择播放片段</h2>
+
+    <input type="file" id="audioFile" accept="audio/*"><br>
+
+    <div id="waveform"></div>
+
+    <button onclick="playRegion()">▶ 播放片段</button>
+    <button onclick="toggleLoop()">🔁 循环: <span id="loopStatus">关闭</span></button>
+    <button onclick="pause()">⏸ 暂停</button>
+
+    <script>
+        let wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#ccc',
+            progressColor: '#007bff',
+            height: 100,
+            plugins: [
+                WaveSurfer.regions.create()
+            ]
+        });
+
+        let region = null;
+        let loopEnabled = false;
+
+        document.getElementById('audioFile').addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                wavesurfer.load(objectUrl);
+            }
+        });
+
+        wavesurfer.on('ready', () => {
+            const duration = wavesurfer.getDuration();
+            if (region) region.remove();
+
+            region = wavesurfer.addRegion({
+                start: 0,
+                end: Math.min(10, duration),
+                color: 'rgba(0, 123, 255, 0.2)',
+                drag: true,
+                resize: true,
+                loop: loopEnabled
+            });
+        });
+
+        function playRegion() {
+            if (region) {
+                wavesurfer.play(region.start, region.end);
+            }
+        }
+
+        function toggleLoop() {
+            loopEnabled = !loopEnabled;
+            document.getElementById('loopStatus').textContent = loopEnabled ? '开启' : '关闭';
+            if (region) region.loop = loopEnabled;
+        }
+
+        function pause() {
+            wavesurfer.pause();
+        }
+    </script>
+</body>
+
+</html>
