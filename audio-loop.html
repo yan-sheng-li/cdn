@@ -91,6 +91,35 @@
         function pause() {
             wavesurfer.pause();
         }
+        // 增加键盘快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // 防止空格触发页面滚动
+                if (wavesurfer.isPlaying()) {
+                    wavesurfer.pause();
+                } else {
+                    if (region) {
+                        // 如果播放超出区域，从头播放片段
+                        const currentTime = wavesurfer.getCurrentTime();
+                        if (currentTime < region.start || currentTime > region.end) {
+                            wavesurfer.play(region.start, region.end);
+                        } else {
+                            wavesurfer.play();
+                        }
+                    } else {
+                        wavesurfer.play();
+                    }
+                }
+            }
+
+            if (e.code === 'Enter') {
+                e.preventDefault();
+                if (region) {
+                    wavesurfer.setCurrentTime(region.start);
+                }
+            }
+        });
+
     </script>
 </body>
 
