@@ -6,3 +6,4 @@
 - [自定义水印](https://www.liyansheng.top/cdn/watermark.js)
 - [图片排版水印保护](https://www.liyansheng.top/cdn/ProductDetailsPage)
 - [sql解析精简](https://www.liyansheng.top/cdn/extract_create_table)
+- [拖拽选择播放片段](https://www.liyansheng.top/cdn/audio-loop)
