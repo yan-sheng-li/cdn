@@ -126,7 +126,57 @@
 
     <p>📱 空格键播放/暂停，回车回到片段起点（桌面端）</p>
 
+    <hr>
+    <h3>🎼 曲谱展示</h3>
+    <ul id="qupuList"></ul>
+
+
+
     <script>
+        const qupuList = [
+            { song_name: "真的爱你", qupu_url: "https://file.yoga-8.com/jian/2749221453381689185_0.jpg" },
+            { song_name: "痴情冢", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241107172845.png" },
+            { song_name: "美丽的神话", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241107174350.png" },
+            { song_name: "我和我的祖国", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241108230703.png" },
+            { song_name: "葬花吟", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109114030.png" },
+            { song_name: "天空之城", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109114400.png" },
+            { song_name: "天空之城", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109114428.png" },
+            { song_name: "走在乡间的小路上", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109114656.png" },
+            { song_name: "琵琶语", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109114822.png" },
+            { song_name: "海阔天空", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109115107.png" },
+            { song_name: "太多", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109115204.png" },
+            { song_name: "乌兰托巴的夜", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109115326.png" },
+            { song_name: "千与千寻", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109115655.png" },
+            { song_name: "九儿", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241109120129.png" },
+            { song_name: "你", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241112161701.png" },
+            { song_name: "牧羊曲", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241113135049.png" },
+            { song_name: "云宫迅音", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241114221451.png" },
+            { song_name: "梁祝", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241115135700.png" },
+            { song_name: "长相依", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241115135925.png" },
+            { song_name: "梦中的额吉", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241115164157.png" },
+            { song_name: "千千阙歌", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241118232627.png" },
+            { song_name: "映山红", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241126223628.png" },
+            { song_name: "恋曲1990", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241128000407.png" },
+            { song_name: "鸿雁", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241128021216.png" },
+            { song_name: "渔舟唱晚", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241128022701.png" },
+            { song_name: "匆匆那年", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241128161734.png" },
+            { song_name: "后来", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241128161753.png" },
+            { song_name: "轻轻地告诉你", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241129104743.png" },
+            { song_name: "星月神话", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241129104614.png" },
+            { song_name: "回梦游仙", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241201232630.png" },
+            { song_name: "童话", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241204124526.png" },
+            { song_name: "天仙配", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20241222160632.png" },
+            { song_name: "我的楼兰", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20250102213812.png" },
+            { song_name: "曾经的你", qupu_url: "http://cdn.qiniu.liyansheng.top/img/20250103213904.png" },
+            { song_name: "等一分钟", qupu_url: "http://cdn.qiniu.liyansheng.top/img/等一分钟.png" },
+            { song_name: "丁香花", qupu_url: "http://cdn.qiniu.liyansheng.top/img/丁香花.png" },
+            { song_name: "卡农", qupu_url: "http://cdn.qiniu.liyansheng.top/img/卡农.png" },
+            { song_name: "天使的翅膀", qupu_url: "http://cdn.qiniu.liyansheng.top/img/天使的翅膀.png" },
+            { song_name: "西海情歌", qupu_url: "http://cdn.qiniu.liyansheng.top/img/西海情歌.jpg" },
+            { song_name: "小芳", qupu_url: "http://cdn.qiniu.liyansheng.top/img/小芳.png" }
+        ];
+
+
         const supportedFormats = ['.mp3', '.wav', '.ogg', '.flac', '.m4a'];
         let wavesurfer = WaveSurfer.create({
             container: '#waveform',
@@ -253,6 +303,23 @@
                 loadAudioFromBlob(audioFiles[0], 0); // 自动加载第一首
             }
         });
+
+        function renderQupuList() {
+            const list = document.getElementById('qupuList');
+            list.innerHTML = '';
+
+            qupuList.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+            <strong>${item.song_name}</strong>  
+            <a href="${item.qupu_url}" target="_blank">打开原图</a>
+        `;
+                list.appendChild(li);
+            });
+        }
+
+        renderQupuList();
+
 
     </script>
 
