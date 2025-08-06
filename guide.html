@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>木子空间导航</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background: #ff6f61;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        nav {
+            background: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #ff6f61;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            padding: 40px 20px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #333;
+            border-left: 4px solid #ff6f61;
+            padding-left: 10px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            min-height: 80px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .card-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .card-content h5 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-content p {
+            margin: 0;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            /* 显示2行 */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+
+        @media screen and (max-width: 992px) {
+            .container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        footer {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+            margin: 40px 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>木子空间-导航</h1>
+        <p>收录实用链接与接口资源推荐</p>
+    </header>
+
+    <nav style="text-align: center;" id="navLinks">
+        <!-- 动态导航锚点插入到这里 -->
+    </nav>
+
+    <main id="mainContent">
+        <!-- 动态 section 分组插入到这里 -->
+    </main>
+
+    <footer>
+        © 2025 木子空间导航 | Powered by HTML & CSS
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("https://mini.liyansheng.top/v1/api/internet-site/list")
+                .then(response => response.json())
+                .then(res => {
+                    if (res.code !== 200) {
+                        console.error("接口错误:", res.msg);
+                        return;
+                    }
+
+                    const data = res.data;
+                    const grouped = {};
+
+                    // 分组数据：以 category 分组
+                    data.forEach(item => {
+                        const cat = item.category || "未分类";
+                        if (!grouped[cat]) grouped[cat] = [];
+                        grouped[cat].push(item);
+                    });
+
+                    const nav = document.getElementById("navLinks");
+                    const main = document.getElementById("mainContent");
+
+                    Object.keys(grouped).forEach((category, index) => {
+                        const sectionId = "group" + index;
+
+                        // 创建导航锚点
+                        const link = document.createElement("a");
+                        link.href = `#${sectionId}`;
+                        link.textContent = category;
+                        nav.appendChild(link);
+
+                        // 创建分组 section
+                        const section = document.createElement("section");
+                        section.className = "section";
+                        section.id = sectionId;
+
+                        const h2 = document.createElement("h2");
+                        h2.textContent = category;
+                        section.appendChild(h2);
+
+                        const container = document.createElement("div");
+                        container.className = "container";
+
+                        // 添加卡片
+                        grouped[category].forEach(site => {
+                            const card = document.createElement("a");
+                            card.className = "card";
+                            card.href = site.url;
+                            card.target = "_blank";
+                            card.innerHTML = `
+                            <img src="${site.coverUrl}" alt="${site.name}">
+                            <div class="card-content">
+                                <h5>${site.name}</h5>
+                                <p>${site.remark || "暂无描述"}</p>
+                            </div>
+                        `;
+                            container.appendChild(card);
+                        });
+
+                        section.appendChild(container);
+                        main.appendChild(section);
+                    });
+                })
+                .catch(err => {
+                    console.error("请求失败：", err);
+                });
+        });
+    </script>
+
+
+</body>
+
+</html>
