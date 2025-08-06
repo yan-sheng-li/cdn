@@ -3,20 +3,28 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>木子空间导航</title>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
+        html,
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f5f5f5;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
         header {
+            width: 100%;
+            max-width: 100%;
             background: #ff6f61;
             color: white;
             text-align: center;
@@ -122,12 +130,11 @@
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            /* 显示2行 */
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-
+        /* ✅ 适配不同屏幕 */
         @media screen and (max-width: 992px) {
             .container {
                 grid-template-columns: repeat(3, 1fr);
@@ -138,11 +145,49 @@
             .container {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            header {
+                padding: 12px;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+
+            header p {
+                font-size: 12px;
+            }
+
+            footer {
+                font-size: 12px;
+                padding: 10px 5px;
+            }
+
+            .card {
+                flex-direction: row;
+                align-items: center;
+                padding: 8px;
+            }
+
+            .card img {
+                width: 48px;
+                height: 48px;
+            }
+
+            .card-content h5 {
+                font-size: 14px;
+                white-space: normal;
+            }
+
+            .card-content p {
+                font-size: 12px;
+            }
         }
 
         @media screen and (max-width: 480px) {
             .container {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                /* ✅ 小屏也保持两列 */
             }
         }
 
@@ -158,6 +203,7 @@
             color: inherit;
         }
     </style>
+
 </head>
 
 <body>
