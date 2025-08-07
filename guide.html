@@ -276,7 +276,7 @@
                             card.href = site.url;
                             card.target = "_blank";
                             card.innerHTML = `
-                            <img src="${site.coverUrl}" alt="${site.name}">
+                            <img src="${site.coverUrl || 'http://cdn.qiniu.liyansheng.top/img/link.png'}" alt="${site.name}">
                             <div class="card-content">
                                 <h5>${site.name}</h5>
                                 <p>${site.remark}</p>
