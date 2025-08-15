@@ -223,7 +223,7 @@
           </div>
           <p class='lead'>服务编号：${serviceInfo.number}</p>
           <p class='lead'>客户名称：${serviceInfo.customer}</p>
-          <p class='lead'>项目周期：${serviceInfo.startTime} - ${serviceInfo.endTime}</p>
+            <p class='lead'>项目周期：${new Date(serviceInfo.startTime).toLocaleString()} - ${new Date(serviceInfo.endTime).toLocaleString()}</p>
           <p class='lead'>项目内容：${serviceInfo.content}</p>
           <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
         `;
