@@ -222,7 +222,7 @@
       { date: "2025-08-02 14:30", status: "已完成", title: "需求确认", desc: "完成需求澄清会，输出《需求确认单》和范围清单。", cover: "http://cdn.qiniu.liyansheng.top/img/image-20250812224607061.png" },
       { date: "2025-08-03 16:00", status: "已完成", title: "原型评审", desc: "交互原型过审，记录评审意见并形成修改版本。", cover: "https://via.placeholder.com/120x60?text=原型" },
       { date: "2025-08-04 09:20", status: "已完成", title: "合同签署", desc: "双方确认商务条款并签署，进入实施阶段。", cover: "https://via.placeholder.com/120x60?text=合同" },
-      { date: "2025-08-05 14:00", status: "进行中", title: "开发启动", desc: "建立代码仓库与分支策略，完成项目脚手架与基础模块搭建。", current: true, cover: "https://via.placeholder.com/120x60?text=开发" },
+      { date: "2025-08-05 14:00", status: "进行中", title: "开发启动", desc: "建立代码仓库与分支策略，完成项目脚手架与基础模块搭建。", cover: "https://via.placeholder.com/120x60?text=开发" },
       { date: "2025-08-09 18:30", status: "排期", title: "版本提交", desc: "提交 V1.0.0 版本至测试环境，产出更新日志与部署说明。", cover: "https://via.placeholder.com/120x60?text=提交" },
       { date: "2025-08-10 16:20", status: "排期", title: "联调测试", desc: "与对接系统完成接口联调，跟踪问题单并回归。", cover: "https://via.placeholder.com/120x60?text=联调" },
       { date: "2025-08-12 09:00", status: "待办", title: "远程调试", desc: "远程接入客户环境进行排障与性能优化。", cover: "https://via.placeholder.com/120x60?text=调试" },
@@ -232,17 +232,18 @@
 
     // 渲染节点，增加 cover 示意图
     const itemsContainer = document.getElementById("timeline-items");
-    timelineData.forEach(node => {
+    timelineData.forEach((node, index) => {
+      const isLast = index === timelineData.length - 1; // 判断是否最后一个
       const item = document.createElement("div");
       item.className = "timeline__item";
       item.innerHTML = `
-        <div class="timeline__content ${node.current ? 'is-current' : ''}">
-          <div class="meta"><span>${node.date}</span><span class="tag">${node.status}</span></div>
-          <h3>${node.title}</h3>
-          <p>${node.desc}</p>
-          ${node.cover ? `<div style='margin:8px 0'><img src='${node.cover}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
-        </div>
-      `;
+    <div class="timeline__content ${isLast ? 'is-current' : ''}">
+      <div class="meta"><span>${node.date}</span><span class="tag">${node.status}</span></div>
+      <h3>${node.title}</h3>
+      <p>${node.desc}</p>
+      ${node.cover ? `<div style='margin:8px 0'><img src='${node.cover}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
+    </div>
+  `;
       itemsContainer.appendChild(item);
     });
 
