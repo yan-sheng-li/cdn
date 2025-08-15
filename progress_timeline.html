@@ -200,73 +200,79 @@
   <script src="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/js/timeline.min.js"></script>
   <script src="https://www.liyansheng.top/cdn/timedown.min.js"></script>
   <script>
-    // 服务信息数据
-    const serviceInfo = {
-      content: "具体内容",
-      number: "123456",
-      customer: "张三",
-      startTime: "2025-08-18 12:00:00",
-      endTime: "2025-08-20 12:00:00"
-    };
+    // 获取路径参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const number = urlParams.get('number');
+    fetch(`https://mini.liyansheng.top/v1/api/targeted-services/service-info/${number}`)
+      .then(response => response.json())
+      .then(data => {
+        const pageData = data.data;
+        // 服务信息数据
+        const serviceInfo = {
+          content: pageData.content,
+          number: pageData.number,
+          customer: pageData.customerName,
+          startTime: pageData.startTime,
+          endTime: pageData.endTime
+        };
+        // 渲染服务信息
+        const serviceInfoEl = document.getElementById("service-info");
+        serviceInfoEl.innerHTML = `
+          <div style='text-align:center;'>
+            <h1>定向服务进度一览</h1>
+          </div>
+          <p class='lead'>服务编号：${serviceInfo.number}</p>
+          <p class='lead'>客户名称：${serviceInfo.customer}</p>
+          <p class='lead'>项目周期：${serviceInfo.startTime} - ${serviceInfo.endTime}</p>
+          <p class='lead'>项目内容：${serviceInfo.content}</p>
+          <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
+        `;
+        // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
+        const timelineData = (pageData.timeNodeList || []).slice().reverse();
+        // 渲染节点，增加 cover 示意图
+        const itemsContainer = document.getElementById("timeline-items");
+        timelineData.forEach((node, index) => {
+          const isLast = index === timelineData.length - 1; // 判断是否最后一个
+          const item = document.createElement("div");
+          item.className = "timeline__item";
+          item.innerHTML = `
+            <div class="timeline__content ${isLast ? 'is-current' : ''}">
+              <div class="meta"><span>⏰${node.createdAt}</span></div>
+              <h3>${node.title}</h3>
+              <p>${node.description}</p>
+              ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
+            </div>
+          `;
+          itemsContainer.appendChild(item);
+        });
+        // 初始化时间轴
+        timeline(document.querySelectorAll('.timeline'), {
+          verticalStartPosition: 'right',
+          verticalTrigger: '150px'
+        });
+        // 主题切换逻辑
+        const btn = document.getElementById('theme-toggle');
+        btn.addEventListener('click', () => {
+          document.body.classList.toggle('dark-theme');
+          document.body.classList.toggle('light-theme');
+          btn.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
+        });
+        btn.textContent = '切换为浅色';
+        // 初始化倒计时，确保节点已渲染
+        new Timedown({
+          id: 1,
+          endTime: new Date(serviceInfo.endTime).getTime(),
+          endText: '活动已结束',
+          selector: '#countdown-timer',
+          format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
+          endCallback: () => alert('倒计时结束！')
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching service info:', error);
+      });
 
-    // 渲染服务信息
-    const serviceInfoEl = document.getElementById("service-info");
-    serviceInfoEl.innerHTML = `
-      <div style='text-align:center;'>
-        <h1>定向服务进度一览</h1>
-      </div>
-      <p class='lead'>服务编号：${serviceInfo.number}</p>
-      <p class='lead'>客户名称：${serviceInfo.customer}</p>
-      <p class='lead'>项目周期：${serviceInfo.startTime} - ${serviceInfo.endTime}</p>
-      <p class='lead'>项目内容：${serviceInfo.content}</p>
-      <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
-    `;
-    // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
-    const timelineData = [
-      { date: "2025-08-01 10:00", title: "客户下单", desc: "已收到客户订单与基本期望，建立项目空间并创建初始里程碑。", cover: "" },
-      { date: "2025-08-02 14:30", title: "需求确认", desc: "完成需求澄清会，输出《需求确认单》和范围清单。", cover: "http://cdn.qiniu.liyansheng.top/img/image-20250812224607061.png" },
-    ];
 
-    // 渲染节点，增加 cover 示意图
-    const itemsContainer = document.getElementById("timeline-items");
-    timelineData.forEach((node, index) => {
-      const isLast = index === timelineData.length - 1; // 判断是否最后一个
-      const item = document.createElement("div");
-      item.className = "timeline__item";
-      item.innerHTML = `
-    <div class="timeline__content ${isLast ? 'is-current' : ''}">
-      <div class="meta"><span>⏰${node.date}</span></div>
-      <h3>${node.title}</h3>
-      <p>${node.desc}</p>
-      ${node.cover ? `<div style='margin:8px 0'><img src='${node.cover}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
-    </div>
-  `;
-      itemsContainer.appendChild(item);
-    });
-
-    // 初始化时间轴
-    timeline(document.querySelectorAll('.timeline'), {
-      verticalStartPosition: 'right',
-      verticalTrigger: '150px'
-    });
-
-    // 主题切换逻辑
-    const btn = document.getElementById('theme-toggle');
-    btn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-theme');
-      document.body.classList.toggle('light-theme');
-      btn.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
-    });
-    btn.textContent = '切换为浅色';
-
-    const timer = new Timedown({
-      id: 1,
-      endTime: new Date(serviceInfo.endTime).getTime(),
-      endText: '活动已结束',
-      selector: '#countdown-timer',
-      format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
-      endCallback: () => alert('倒计时结束！')
-    });
   </script>
 </body>
 
