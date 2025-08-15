@@ -183,18 +183,7 @@
 
   <div class="container">
     <div class="service-card">
-      <div style="text-align: center;">
-        <h1>定向服务进度一览</h1>
-      </div>
-
-      <p class="lead">服务编号：123456</p>
-      <p class="lead">客户名称：张三</p>
-      <p class="lead">项目经理：李四</p>
-      <p class="lead">项目周期：2025年8月1日 - 2025年8月14日</p>
-      <!-- 剩余时间倒计时 -->
-      <p class="lead" id="countdown">
-        剩余时间：<span id="countdown-timer"></span>
-      </p>
+      <div id="service-info"></div>
     </div>
 
     <div class="timeline" id="project-timeline">
@@ -209,6 +198,24 @@
   <script src="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/js/timeline.min.js"></script>
   <script src="https://www.liyansheng.top/cdn/timedown.min.js"></script>
   <script>
+    // 服务信息数据
+    const serviceInfo = {
+      title: "定向服务进度一览",
+      number: "123456",
+      customer: "张三",
+      startTime: "2025-08-18 12:00:00",
+      endTime: "2025-08-20 12:00:00"
+    };
+
+    // 渲染服务信息
+    const serviceInfoEl = document.getElementById("service-info");
+    serviceInfoEl.innerHTML = `
+      <div style='text-align:center;'><h1>${serviceInfo.title}</h1></div>
+      <p class='lead'>服务编号：${serviceInfo.number}</p>
+      <p class='lead'>客户名称：${serviceInfo.customer}</p>
+      <p class='lead'>项目周期：${serviceInfo.startTime} - ${serviceInfo.endTime}</p>
+      <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
+    `;
     // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
     const timelineData = [
       { date: "2025-08-01 10:00", status: "已完成", title: "客户下单", desc: "已收到客户订单与基本期望，建立项目空间并创建初始里程碑。", cover: "" },
@@ -256,7 +263,7 @@
 
     const timer = new Timedown({
       id: 1,
-      endTime: new Date('2025-08-18 12:00:00').getTime(),
+      endTime: new Date(serviceInfo.endTime).getTime(),
       endText: '活动已结束',
       selector: '#countdown-timer',
       format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
