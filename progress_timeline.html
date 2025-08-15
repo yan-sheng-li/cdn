@@ -27,7 +27,7 @@
     }
 
     p.lead {
-      margin: 0 0 24px
+      margin: 0 0 10px
     }
 
     /* 按钮样式 */
@@ -43,6 +43,7 @@
       color: #fff;
       font-size: 14px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
+      z-index: 1000;
     }
 
     /* 时间轴通用 */
@@ -146,9 +147,10 @@
     body.light-theme .timeline:before {
       background: rgba(0, 0, 0, .15)
     }
+
     #countdown-timer {
       font-weight: bold;
-      color: #60a5fa;
+      color: #ee1532;
       text-align: center;
       line-height: 2;
     }
@@ -182,7 +184,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/js/timeline.min.js"></script>
-  <script src="timedown.min.js"></script>
+  <script src="https://www.liyansheng.top/cdn/timedown.min.js"></script>
   <script>
     // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
     const timelineData = [
