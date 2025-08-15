@@ -219,7 +219,7 @@
         const serviceInfoEl = document.getElementById("service-info");
         serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
-            <h1>木子空间-项目进度跟踪</h1>
+            <h2>项目进度跟踪</h2>
             </div>
           <p class='lead'>服务编号：${serviceInfo.number}</p>
           <p class='lead'>客户名称：${serviceInfo.customer}</p>
@@ -232,7 +232,7 @@
         // 渲染节点，增加 cover 示意图
         const itemsContainer = document.getElementById("timeline-items");
         timelineData.forEach((node, index) => {
-          const isLast = index === timelineData.length - 1; // 判断是否最后一个
+          const isLast = index === 0; // 判断是否最后一个
           const item = document.createElement("div");
           item.className = "timeline__item";
           item.innerHTML = `
