@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>项目进度时间轴 · Squarechip Timeline</title>
+  <link href="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/css/timeline.min.css" rel="stylesheet" />
+
+  <style>
+    /* 基础样式（通用） */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      margin: 0;
+      padding: 32px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 12px
+    }
+
+    p.lead {
+      margin: 0 0 24px
+    }
+
+    /* 按钮样式 */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #60a5fa;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
+    }
+
+    /* 时间轴通用 */
+    .timeline__content {
+      border-radius: 14px;
+      padding: 16px 18px;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .timeline__content h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+
+    .timeline__content .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .timeline__content .meta .tag {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .timeline__content.is-current {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    /* 暗色主题 */
+    body.dark-theme {
+      background: #0b1220;
+      color: #e5e7eb;
+    }
+
+    body.dark-theme p.lead {
+      color: #9ca3af;
+    }
+
+    body.dark-theme .timeline__content {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    body.dark-theme .timeline__content h3 {
+      color: #e2e8f0;
+    }
+
+    body.dark-theme .timeline__content .meta {
+      color: #9ca3af;
+    }
+
+    body.dark-theme .timeline__content .meta .tag {
+      border: 1px solid rgba(255, 255, 255, .12);
+    }
+
+    body.dark-theme .timeline__content p {
+      color: #cbd5e1;
+    }
+
+    body.dark-theme .timeline:before {
+      background: rgba(148, 163, 184, .25)
+    }
+
+    /* 浅色主题 */
+    body.light-theme {
+      background: #ffffff;
+      color: #333333;
+    }
+
+    body.light-theme p.lead {
+      color: #555555;
+    }
+
+    body.light-theme .timeline__content {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, .1);
+    }
+
+    body.light-theme .timeline__content h3 {
+      color: #111111;
+    }
+
+    body.light-theme .timeline__content .meta {
+      color: #555555;
+    }
+
+    body.light-theme .timeline__content .meta .tag {
+      border: 1px solid rgba(0, 0, 0, .12);
+    }
+
+    body.light-theme .timeline__content p {
+      color: #444444;
+    }
+
+    body.light-theme .timeline:before {
+      background: rgba(0, 0, 0, .15)
+    }
+  </style>
+</head>
+
+<body class="dark-theme">
+  <button class="theme-toggle" id="theme-toggle">切换主题</button>
+
+  <div class="container">
+    <div style="text-align: center;">
+    <h1>定向服务进度一览</h1>
+    </div>
+
+    <p class="lead">服务编号：123456</p>
+    <p class="lead">客户名称：张三</p>
+    <p class="lead">项目经理：李四</p>
+    <p class="lead">项目周期：2025年8月1日 - 2025年8月14日</p>
+    <!-- 剩余时间倒计时 -->
+    <p class="lead" id="countdown">
+      剩余时间：<span id="countdown-timer"></span>
+    </p>
+
+    <div class="timeline" id="project-timeline">
+      <div class="timeline__wrap">
+        <div class="timeline__items" id="timeline-items">
+          <!-- 节点内容将由 JS 动态生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/js/timeline.min.js"></script>
+  <script>
+    // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
+    const timelineData = [
+      { date: "2025-08-01 10:00", status: "已完成", title: "客户下单", desc: "已收到客户订单与基本期望，建立项目空间并创建初始里程碑。", cover: "" },
+      { date: "2025-08-02 14:30", status: "已完成", title: "需求确认", desc: "完成需求澄清会，输出《需求确认单》和范围清单。", cover: "http://cdn.qiniu.liyansheng.top/img/image-20250812224607061.png" },
+      { date: "2025-08-03 16:00", status: "已完成", title: "原型评审", desc: "交互原型过审，记录评审意见并形成修改版本。", cover: "https://via.placeholder.com/120x60?text=原型" },
+      { date: "2025-08-04 09:20", status: "已完成", title: "合同签署", desc: "双方确认商务条款并签署，进入实施阶段。", cover: "https://via.placeholder.com/120x60?text=合同" },
+      { date: "2025-08-05 14:00", status: "进行中", title: "开发启动", desc: "建立代码仓库与分支策略，完成项目脚手架与基础模块搭建。", current: true, cover: "https://via.placeholder.com/120x60?text=开发" },
+      { date: "2025-08-09 18:30", status: "排期", title: "版本提交", desc: "提交 V1.0.0 版本至测试环境，产出更新日志与部署说明。", cover: "https://via.placeholder.com/120x60?text=提交" },
+      { date: "2025-08-10 16:20", status: "排期", title: "联调测试", desc: "与对接系统完成接口联调，跟踪问题单并回归。", cover: "https://via.placeholder.com/120x60?text=联调" },
+      { date: "2025-08-12 09:00", status: "待办", title: "远程调试", desc: "远程接入客户环境进行排障与性能优化。", cover: "https://via.placeholder.com/120x60?text=调试" },
+      { date: "2025-08-13 19:00", status: "待办", title: "上线验收", desc: "完成正式环境发布与用户验收签字。", cover: "https://via.placeholder.com/120x60?text=验收" },
+      { date: "2025-08-14 15:30", status: "待办", title: "项目归档", desc: "沉淀交付文档与复盘报告，关闭项目。", cover: "https://via.placeholder.com/120x60?text=归档" }
+    ];
+
+    // 渲染节点，增加 cover 示意图
+    const itemsContainer = document.getElementById("timeline-items");
+    timelineData.forEach(node => {
+      const item = document.createElement("div");
+      item.className = "timeline__item";
+      item.innerHTML = `
+        <div class="timeline__content ${node.current ? 'is-current' : ''}">
+          <div class="meta"><span>${node.date}</span><span class="tag">${node.status}</span></div>
+          <h3>${node.title}</h3>
+          <p>${node.desc}</p>
+          ${node.cover ? `<div style='margin:8px 0'><img src='${node.cover}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
+        </div>
+      `;
+      itemsContainer.appendChild(item);
+    });
+
+    // 初始化时间轴
+    timeline(document.querySelectorAll('.timeline'), {
+      verticalStartPosition: 'right',
+      verticalTrigger: '150px'
+    });
+
+    // 主题切换逻辑
+    const btn = document.getElementById('theme-toggle');
+    btn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      document.body.classList.toggle('light-theme');
+      btn.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
+    });
+    btn.textContent = '切换为浅色';
+  </script>
+</body>
+
+</html>
