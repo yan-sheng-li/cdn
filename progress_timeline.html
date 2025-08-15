@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>木子空间-项目进度跟踪</title>
+  <title>木子空间</title>
   <link rel="icon" type="image/x-icon" href="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" />
   <link href="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/css/timeline.min.css" rel="stylesheet" />
 
@@ -218,9 +218,10 @@
         // 渲染服务信息
         const serviceInfoEl = document.getElementById("service-info");
         serviceInfoEl.innerHTML = `
-          <div style='text-align:center;'>
-            <h1>定向服务进度一览</h1>
-          </div>
+            <div style='text-align:center;'>
+            <img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" alt="Logo" style="width:64px;height:64px;margin:12px auto;display:block;">
+            <h1>定向服务-进度跟踪</h1>
+            </div>
           <p class='lead'>服务编号：${serviceInfo.number}</p>
           <p class='lead'>客户名称：${serviceInfo.customer}</p>
             <p class='lead'>项目周期：${new Date(serviceInfo.startTime).toLocaleString()} - ${new Date(serviceInfo.endTime).toLocaleString()}</p>
@@ -237,7 +238,7 @@
           item.className = "timeline__item";
           item.innerHTML = `
             <div class="timeline__content ${isLast ? 'is-current' : ''}">
-              <div class="meta"><span>⏰${node.createdAt}</span></div>
+              <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
               <h3>${node.title}</h3>
               <p>${node.description}</p>
               ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
