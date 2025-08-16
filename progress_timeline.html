@@ -203,7 +203,7 @@
     // 获取路径参数
     const urlParams = new URLSearchParams(window.location.search);
     const number = urlParams.get('number');
-    fetch(`http://localhost:8888/v1/api/targeted-services/service-info/${number}`)
+    fetch(`https://mini.liyansheng.top/v1/api/targeted-services/service-info/${number}`)
       .then(response => response.json())
       .then(data => {
         const pageData = data.data;
