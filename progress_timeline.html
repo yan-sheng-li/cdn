@@ -203,7 +203,7 @@
     // 获取路径参数
     const urlParams = new URLSearchParams(window.location.search);
     const number = urlParams.get('number');
-    fetch(`https://mini.liyansheng.top/v1/api/targeted-services/service-info/${number}`)
+    fetch(`http://localhost:8888/v1/api/targeted-services/service-info/${number}`)
       .then(response => response.json())
       .then(data => {
         const pageData = data.data;
@@ -238,7 +238,7 @@
           item.innerHTML = `
             <div class="timeline__content ${isLast ? 'is-current' : ''}">
               <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
-              <h3>${node.title}</h3>
+              <h3>✅${node.title}</h3>
               <p>${node.description}</p>
               ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
             </div>
