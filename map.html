@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Vue 3 + Leaflet 移动端地图示例</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    #app {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      flex: 1;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px;
+      background: rgba(240,240,240,0.9);
+      border-bottom: 1px solid #ddd;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+    .buttons button {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    }
+    .buttons button:active {
+      background: #eee;
+    }
+    /* 自定义定位按钮 */
+    .locate-button {
+      width: 44px;
+      height: 44px;
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 20px;
+    }
+    .locate-button:hover {
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="buttons">
+    <button @click="changeBase('osm')">街道图</button>
+    <button @click="changeBase('satellite')">卫星图</button>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const map = ref(null);
+    const baseLayers = {};
+    const overlayLayers = {};
+    let locationMarker = null;
+    let locationCircle = null;
+
+    onMounted(() => {
+      // 初始化地图
+      map.value = L.map('map', {
+        center: [47.413220, -1.219482],
+        zoom: 13,
+        zoomControl: false
+      });
+
+      // 底图：街道图
+      baseLayers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+
+      // 底图：卫星图
+      baseLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
+      });
+
+      // 覆盖层：标注
+      overlayLayers.labels = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        opacity: 0.5
+      });
+
+      // 默认加载街道图
+      baseLayers.osm.addTo(map.value);
+
+      // 基础控件
+      L.control.zoom({ position: 'bottomright' }).addTo(map.value);
+      L.control.scale({ position: 'bottomleft', metric: true }).addTo(map.value);
+      L.control.layers(
+        { "街道图": baseLayers.osm, "卫星图": baseLayers.satellite },
+        { "标注": overlayLayers.labels },
+        { position: 'topright' }
+      ).addTo(map.value);
+
+      // 定位控件
+      const locateControl = L.control({ position: 'bottomright' });
+      locateControl.onAdd = function () {
+        const div = L.DomUtil.create('div', 'locate-button');
+        div.innerHTML = "📍";
+        div.title = "定位到我的位置";
+        div.onclick = () => {
+          map.value.locate({ setView: true, maxZoom: 16 });
+        };
+        return div;
+      };
+      locateControl.addTo(map.value);
+
+      // 定位成功
+      map.value.on("locationfound", (e) => {
+        if (locationMarker) map.value.removeLayer(locationMarker);
+        if (locationCircle) map.value.removeLayer(locationCircle);
+
+        locationMarker = L.marker(e.latlng).addTo(map.value)
+          .bindPopup("你在这里").openPopup();
+        locationCircle = L.circle(e.latlng, { radius: e.accuracy, color: "blue", fillOpacity: 0.1 }).addTo(map.value);
+      });
+
+      // 定位失败
+      map.value.on("locationerror", (e) => {
+        alert("定位失败：" + e.message);
+      });
+    });
+
+    // 切换底图
+    const changeBase = (type) => {
+      Object.values(baseLayers).forEach(layer => map.value.removeLayer(layer));
+      baseLayers[type].addTo(map.value);
+    };
+
+    return { changeBase };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
