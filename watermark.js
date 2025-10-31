@@ -100,7 +100,7 @@
         adContainer.style.color = '#fff';  // 文字颜色为白色
         adContainer.style.fontSize = '16px';  // 设置字体大小
         adContainer.style.cursor = 'pointer';  // 鼠标悬停时显示为指针样式
-        // adContainer.textContent = '😃帮我推荐同学，返现8%，最高100';  // 广告内容
+        // adContainer.textContent = '项目定制&远程调试';  // 广告内容
 
         // 点击广告时跳转到指定链接
         adContainer.addEventListener('click', () => {
@@ -114,4 +114,5 @@
     // 页面加载完成后调用 createWatermark 方法
     window.addEventListener('DOMContentLoaded', createWatermark);
 })();
+
 
