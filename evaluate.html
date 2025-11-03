@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>木子空间 | 项目评估报价</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <el-container style="max-width: 800px; margin: 0 auto; ">
+            <el-header>
+
+            </el-header>
+            <el-main>
+                <div style="font-weight: bold; text-align: center;">
+                    <h2><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png"
+                                style="max-width:10%;height:auto;" alt="">项目评估</span></h2>
+                </div>
+                <el-form :model="form" label-width="120px" class="demo-ruleForm">
+                    <el-form-item label="项目名称">
+                        <el-input v-model="form.projectName" placeholder="请输入项目名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="功能点">
+                        <el-input type="textarea" v-model="form.features" placeholder="请输入功能点描述"></el-input>
+                    </el-form-item>
+                    <el-form-item label="技术栈">
+                        <el-input v-model="form.techStack" placeholder="请输入技术栈（如 Vue3 + Element Plus）"></el-input>
+                    </el-form-item>
+                    <el-form-item label="附加">
+                        <el-input type="textarea" v-model="form.additional" placeholder="请输入附加信息"></el-input>
+                    </el-form-item>
+                </el-form>
+
+                <el-divider></el-divider>
+
+                <div style="margin-bottom: 10px;">
+                    <el-button type="primary" @click="addRow">添加报价项</el-button>
+                </div>
+
+                <el-table :data="tableData" border style="width: 100%">
+                    <el-table-column prop="operation" label="操作项">
+                        <template #default="scope">
+                            <el-input v-model="scope.row.operation" placeholder="如：源码+远程调试"></el-input>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="date" label="完成日期">
+                        <template #default="scope">
+                            <el-date-picker v-model="scope.row.date" type="date" placeholder="选择日期" format="YYYY-MM-DD"
+                                value-format="YYYY-MM-DD"></el-date-picker>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="price" label="预期承接价">
+                        <template #default="scope">
+                            <el-input-number v-model="scope.row.price" :min="0" :precision="0"
+                                placeholder="价格"></el-input-number>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作">
+                        <template #default="scope">
+                            <el-button type="danger" size="small" @click="deleteRow(scope.$index)">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <el-button type="success" @click="submitForm">保存报价</el-button>
+                </div>
+            </el-main>
+        </el-container>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const { ElContainer, ElHeader, ElMain, ElForm, ElFormItem, ElInput, ElButton, ElDivider, ElTable, ElTableColumn, ElDatePicker, ElInputNumber } = ElementPlus;
+
+        const app = createApp({
+            data() {
+                return {
+                    form: {
+                        projectName: '',
+                        features: '',
+                        techStack: '',
+                        additional: ''
+                    },
+                    tableData: [
+                        {
+                            operation: '源码+远程调试',
+                            date: '',
+                            price: 130
+                        },
+                        {
+                            operation: '源码+远程调试',
+                            date: '',
+                            price: 120
+                        },
+                        {
+                            operation: '源码+远程调试',
+                            date: '',
+                            price: 110
+                        }
+                    ]
+                };
+            },
+            methods: {
+                addRow() {
+                    this.tableData.push({
+                        operation: '',
+                        date: '',
+                        price: 0
+                    });
+                },
+                deleteRow(index) {
+                    this.tableData.splice(index, 1);
+                },
+                submitForm() {
+                    // 这里可以添加保存逻辑，如 console.log 或 API 调用
+                    console.log('表单数据:', this.form);
+                    console.log('表格数据:', this.tableData);
+                    this.$message.success('报价已保存！');
+                }
+            }
+        });
+
+        app.use(ElementPlus);
+        app.component('ElContainer', ElContainer);
+        app.component('ElHeader', ElHeader);
+        app.component('ElMain', ElMain);
+        app.component('ElForm', ElForm);
+        app.component('ElFormItem', ElFormItem);
+        app.component('ElInput', ElInput);
+        app.component('ElButton', ElButton);
+        app.component('ElDivider', ElDivider);
+        app.component('ElTable', ElTable);
+        app.component('ElTableColumn', ElTableColumn);
+        app.component('ElDatePicker', ElDatePicker);
+        app.component('ElInputNumber', ElInputNumber);
+
+        app.mount('#app');
+    </script>
+</body>
+
+</html>
