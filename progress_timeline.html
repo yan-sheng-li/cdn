@@ -218,14 +218,14 @@
         const serviceInfoEl = document.getElementById("service-info");
         serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
-            <h2><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:15%;height:auto;" alt="">项目进度</span></h2>
+            <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:15%;height:auto;" alt="">项目进度</span></h3>
             
             </div>
-          <p class='lead'>服务编号：${serviceInfo.number}</p>
-          <p class='lead'>客户名称：${serviceInfo.customer}</p>
-            <p class='lead'>项目周期：${new Date(serviceInfo.startTime).toLocaleString()} - ${new Date(serviceInfo.endTime).toLocaleString()}</p>
-          <p class='lead'>项目内容：${serviceInfo.content}</p>
-          <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
+          <p class='lead'>编号：${serviceInfo.number}</p>
+          <p class='lead'>客户：${serviceInfo.customer}</p>
+            <p class='lead'>周期：${new Date(serviceInfo.startTime).toLocaleDateString()} - ${new Date(serviceInfo.endTime).toLocaleDateString()}</p>
+          <p class='lead'>项目：${serviceInfo.content}</p>
+          <p class='lead' id='countdown'>⏳：<span id='countdown-timer'></span></p>
         `;
         // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
         const timelineData = pageData.timeNodeList || [];
