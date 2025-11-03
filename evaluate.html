@@ -12,7 +12,7 @@
 
 <body>
     <div id="app">
-        <el-container style="max-width: 800px; margin: 0 auto; ">
+        <el-container style="max-width: 1100px; margin: 0 auto; ">
             <el-header>
 
             </el-header>
@@ -48,7 +48,7 @@
                             <el-input v-model="scope.row.operation" placeholder="如：源码+远程调试"></el-input>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="date" label="完成日期">
+                    <el-table-column prop="date" label="完成日期(当日22点前)">
                         <template #default="scope">
                             <el-date-picker v-model="scope.row.date" type="date" placeholder="选择日期" format="YYYY-MM-DD"
                                 value-format="YYYY-MM-DD"></el-date-picker>
