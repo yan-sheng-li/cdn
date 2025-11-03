@@ -228,11 +228,11 @@
           <p class='lead' id='countdown'>剩余时间：<span id='countdown-timer'></span></p>
         `;
         // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
-        const timelineData = (pageData.timeNodeList || []).slice().reverse();
+        const timelineData = pageData.timeNodeList || [];
         // 渲染节点，增加 cover 示意图
         const itemsContainer = document.getElementById("timeline-items");
         timelineData.forEach((node, index) => {
-          const isLast = index === 0; // 判断是否最后一个
+          const isLast = index === timelineData.length - 1;// 判断是否最后一个
           const item = document.createElement("div");
           item.className = "timeline__item";
           item.innerHTML = `
