@@ -13,13 +13,13 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0 0 20px 0;
       transition: background 0.3s, color 0.3s;
     }
 
     .container {
       max-width: 960px;
-      margin: 0 auto
+      margin: 0 auto;&#10;      padding: 0 20px;
     }
 
     h1 {
@@ -53,10 +53,41 @@
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
     }
 
+    /* 滚动通知样式 */
+    .marquee-container {
+      width: 100%;
+      overflow: hidden;
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      color: white;
+      padding: 8px 0;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .marquee-content {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee-scroll 20s linear infinite;
+      padding-left: 100%;
+    }
+
+    @keyframes marquee-scroll {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .marquee-container:hover .marquee-content {
+      animation-play-state: paused;
+    }
+
     /* 按钮样式 */
     .theme-toggle {
       position: fixed;
-      top: 16px;
+      top: 46px;
       right: 16px;
       padding: 6px 12px;
       border: none;
@@ -107,6 +138,10 @@
       color: #e5e7eb;
     }
 
+    body.dark-theme .marquee-container {
+      background: linear-gradient(90deg, #1e40af, #1d4ed8);
+    }
+
     body.dark-theme p.lead {
       color: #9ca3af;
     }
@@ -140,6 +175,10 @@
     body.light-theme {
       background: #ffffff;
       color: #333333;
+    }
+
+    body.light-theme .marquee-container {
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
     }
 
     body.light-theme p.lead {
@@ -182,6 +221,13 @@
 
 <body class="dark-theme">
   <button class="theme-toggle" id="theme-toggle">切换主题</button>
+  
+  <!-- 滚动通知公告 -->
+  <div class="marquee-container">
+    <div class="marquee-content">
+      <span>📢 木子空间：项目定制 | 远程调试 | Bug审查修复  | 项目升级改造 | 问题探讨</span>
+    </div>
+  </div>
 
   <div class="container">
     <div class="service-card">
