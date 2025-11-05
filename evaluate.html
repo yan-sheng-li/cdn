@@ -28,8 +28,10 @@
                     <el-form-item label="功能点">
                         <el-input type="textarea" v-model="form.features" placeholder="请输入功能点描述"></el-input>
                     </el-form-item>
-                    <el-form-item label="技术栈">
-                        <el-input-tag v-model="form.techStack" placeholder="请输入技术栈（如 Vue3 + Element Plus）"></el-input-tag>
+                    <el-form-item label="技术栈">
+
+                        <el-input-tag v-model="form.techStack" placeholder="请输入技术栈（如 Vue3 + Element Plus）"></el-input-tag>
+
                     </el-form-item>
                     <el-form-item label="附加">
                         <el-input type="textarea" v-model="form.additional" placeholder="请输入附加信息"></el-input>
@@ -61,9 +63,15 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="操作">
+
                         <template #default="scope">
+
+                            <el-button type="primary" size="small" @click="copyRow(scope.$index)">复制</el-button>
+
                             <el-button type="danger" size="small" @click="deleteRow(scope.$index)">删除</el-button>
+
                         </template>
+
                     </el-table-column>
                 </el-table>
 
@@ -75,17 +83,24 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
+        const { createApp } = Vue;
+
         const { ElContainer, ElHeader, ElMain, ElForm, ElFormItem, ElInput, ElButton, ElDivider, ElTable, ElTableColumn, ElDatePicker, ElInputNumber, ElInputTag } = ElementPlus;
 
         const app = createApp({
             data() {
-                return {
-                    form: {
-                        projectName: '',
-                        features: '',
-                        techStack: [],
-                        additional: ''
+                return {
+
+                    form: {
+
+                        projectName: '',
+
+                        features: '',
+
+                        techStack: [],
+
+                        additional: ''
+
                     },
                     tableData: [
                         {
@@ -107,15 +122,43 @@
                 };
             },
             methods: {
+
                 addRow() {
+
                     this.tableData.push({
+
                         operation: '',
+
                         date: '',
+
                         price: 0
+
                     });
+
                 },
+
+                copyRow(index) {
+
+                    // 复制当前行数据并添加到表格末尾
+
+                    const rowData = this.tableData[index];
+
+                    this.tableData.push({
+
+                        operation: rowData.operation,
+
+                        date: rowData.date,
+
+                        price: rowData.price
+
+                    });
+
+                },
+
                 deleteRow(index) {
+
                     this.tableData.splice(index, 1);
+
                 },
                 submitForm() {
                     // 这里可以添加保存逻辑，如 console.log 或 API 调用
@@ -132,13 +175,20 @@
         app.component('ElMain', ElMain);
         app.component('ElForm', ElForm);
         app.component('ElFormItem', ElFormItem);
-        app.component('ElInput', ElInput);
-        app.component('ElButton', ElButton);
-        app.component('ElDivider', ElDivider);
-        app.component('ElTable', ElTable);
-        app.component('ElTableColumn', ElTableColumn);
-        app.component('ElDatePicker', ElDatePicker);
-        app.component('ElInputNumber', ElInputNumber);
+        app.component('ElInput', ElInput);
+
+        app.component('ElButton', ElButton);
+
+        app.component('ElDivider', ElDivider);
+
+        app.component('ElTable', ElTable);
+
+        app.component('ElTableColumn', ElTableColumn);
+
+        app.component('ElDatePicker', ElDatePicker);
+
+        app.component('ElInputNumber', ElInputNumber);
+
         app.component('ElInputTag', ElInputTag);
 
         app.mount('#app');
