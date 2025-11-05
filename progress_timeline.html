@@ -19,7 +19,9 @@
 
     .container {
       max-width: 960px;
-      margin: 0 auto;&#10;      padding: 0 20px;
+      margin: 0 auto;
+      &#10;
+      padding: 0 20px;
     }
 
     h1 {
@@ -75,6 +77,7 @@
       0% {
         transform: translateX(0);
       }
+
       100% {
         transform: translateX(-100%);
       }
@@ -105,6 +108,8 @@
       border-radius: 12px;
       padding: 12px 14px;
       transition: background 0.3s, color 0.3s, border-color 0.3s;
+      position: relative;
+      /* 新增：为标签定位提供相对容器 */
     }
 
     .timeline__content h3 {
@@ -130,6 +135,25 @@
     .timeline__content.is-current {
       outline: 2px solid #60a5fa;
       outline-offset: -10px;
+    }
+
+    /* 新增：最新标签样式 */
+    .latest-badge {
+      position: absolute;
+      top: -8px;
+      right: 8px;
+      background: #60a5fa;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      z-index: 1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-theme .latest-badge {
+      background: #3b82f6;
     }
 
     /* 暗色主题 */
@@ -221,11 +245,11 @@
 
 <body class="dark-theme">
   <button class="theme-toggle" id="theme-toggle">切换主题</button>
-  
+
   <!-- 滚动通知公告 -->
   <div class="marquee-container">
     <div class="marquee-content">
-      <span>📢 木子空间：项目定制 | 远程调试 | Bug审查修复  | 项目升级改造 | 问题探讨</span>
+      <span>📢 木子空间：项目定制 | 远程调试 | Bug审查修复 | 项目升级改造 | 问题探讨</span>
     </div>
   </div>
 
@@ -283,7 +307,8 @@
           const item = document.createElement("div");
           item.className = "timeline__item";
           item.innerHTML = `
-            <div class="timeline__content ${isFirst ? 'is-current' : ''}">
+            <div class="timeline__content ${isFirst ? 'is-current' : ''}" ${isFirst ? 'style="position: relative;"' : ''}>
+              ${isFirst ? '<span class="latest-badge">New</span>' : ''}
               <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
               <h3>✅${node.title}</h3>
               <p>${node.description}</p>
