@@ -28,8 +28,8 @@
                     <el-form-item label="功能点">
                         <el-input type="textarea" v-model="form.features" placeholder="请输入功能点描述"></el-input>
                     </el-form-item>
-                    <el-form-item label="技术栈">
-                        <el-input v-model="form.techStack" placeholder="请输入技术栈（如 Vue3 + Element Plus）"></el-input>
+                    <el-form-item label="技术栈">
+                        <el-input-tag v-model="form.techStack" placeholder="请输入技术栈（如 Vue3 + Element Plus）"></el-input-tag>
                     </el-form-item>
                     <el-form-item label="附加">
                         <el-input type="textarea" v-model="form.additional" placeholder="请输入附加信息"></el-input>
@@ -75,17 +75,17 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
-        const { ElContainer, ElHeader, ElMain, ElForm, ElFormItem, ElInput, ElButton, ElDivider, ElTable, ElTableColumn, ElDatePicker, ElInputNumber } = ElementPlus;
+        const { createApp } = Vue;
+        const { ElContainer, ElHeader, ElMain, ElForm, ElFormItem, ElInput, ElButton, ElDivider, ElTable, ElTableColumn, ElDatePicker, ElInputNumber, ElInputTag } = ElementPlus;
 
         const app = createApp({
             data() {
-                return {
-                    form: {
-                        projectName: '',
-                        features: '',
-                        techStack: '',
-                        additional: ''
+                return {
+                    form: {
+                        projectName: '',
+                        features: '',
+                        techStack: [],
+                        additional: ''
                     },
                     tableData: [
                         {
@@ -132,13 +132,14 @@
         app.component('ElMain', ElMain);
         app.component('ElForm', ElForm);
         app.component('ElFormItem', ElFormItem);
-        app.component('ElInput', ElInput);
-        app.component('ElButton', ElButton);
-        app.component('ElDivider', ElDivider);
-        app.component('ElTable', ElTable);
-        app.component('ElTableColumn', ElTableColumn);
-        app.component('ElDatePicker', ElDatePicker);
-        app.component('ElInputNumber', ElInputNumber);
+        app.component('ElInput', ElInput);
+        app.component('ElButton', ElButton);
+        app.component('ElDivider', ElDivider);
+        app.component('ElTable', ElTable);
+        app.component('ElTableColumn', ElTableColumn);
+        app.component('ElDatePicker', ElDatePicker);
+        app.component('ElInputNumber', ElInputNumber);
+        app.component('ElInputTag', ElInputTag);
 
         app.mount('#app');
     </script>
