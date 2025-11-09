@@ -187,7 +187,7 @@
     </div>
 
     <p>📁 选择文件夹后，可点击曲目播放</p>
-    <p>📱 空格键播放/暂停，回车回到片段起点，↑↓键调节音量（桌面端）</p>
+    <p>📱 空格键播放/暂停，回车回到片段起点，↑↓键调节音量，←→键快进/快退（桌面端）</p>
     <ul id="trackList"></ul>
 
 
@@ -353,12 +353,28 @@
                 volume = Math.min(1, volume + 0.1); // 增加音量，最大为1
                 wavesurfer.setVolume(volume);
             }
-
+            
             if (e.code === 'ArrowDown') {
                 e.preventDefault();
                 let volume = wavesurfer.getVolume();
                 volume = Math.max(0, volume - 0.1); // 减少音量，最小为0
                 wavesurfer.setVolume(volume);
+            }
+            
+            // 快进/快退：右箭头快进，左箭头快退
+            if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                const currentTime = wavesurfer.getCurrentTime();
+                const duration = wavesurfer.getDuration();
+                const newTime = Math.min(duration, currentTime + 5); // 快进5秒
+                wavesurfer.setCurrentTime(newTime);
+            }
+            
+            if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                const currentTime = wavesurfer.getCurrentTime();
+                const newTime = Math.max(0, currentTime - 5); // 快退5秒
+                wavesurfer.setCurrentTime(newTime);
             }
         });
 
