@@ -187,9 +187,10 @@
     </div>
 
     <p>📁 选择文件夹后，可点击曲目播放</p>
+    <p>📱 空格键播放/暂停，回车回到片段起点，↑↓键调节音量（桌面端）</p>
     <ul id="trackList"></ul>
 
-    <p>📱 空格键播放/暂停，回车回到片段起点（桌面端）</p>
+
 
     <hr>
     <h3>🎼 曲谱展示</h3>
@@ -343,6 +344,21 @@
                 if (region) {
                     wavesurfer.setCurrentTime(region.start);
                 }
+            }
+
+            // 音量控制：上箭头增加音量，下箭头减少音量
+            if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                let volume = wavesurfer.getVolume();
+                volume = Math.min(1, volume + 0.1); // 增加音量，最大为1
+                wavesurfer.setVolume(volume);
+            }
+
+            if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                let volume = wavesurfer.getVolume();
+                volume = Math.max(0, volume - 0.1); // 减少音量，最小为0
+                wavesurfer.setVolume(volume);
             }
         });
 
