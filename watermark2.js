@@ -3,7 +3,7 @@
     const watermarkText = ['© 木子空间'];  // 水印内容数组，第一行和第二行文字
 
     // 设置水印透明度（值越小透明度越高）
-    const watermarkOpacity = 0.40;
+    const watermarkOpacity = 0.20;
 
     // 底部横向滚动内容条配置
     const scrollingBar = {
