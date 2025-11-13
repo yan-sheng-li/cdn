@@ -1,6 +1,6 @@
 (function () {
     // 设置水印文本内容，可以设置为两行或更多
-    const watermarkText = ['木子空间'];  // 水印内容数组，第一行和第二行文字
+    const watermarkText = ['© 木子空间'];  // 水印内容数组，第一行和第二行文字
 
     // 设置水印透明度（值越小透明度越高）
     const watermarkOpacity = 0.40;
@@ -34,13 +34,13 @@
         watermarkStyle.style.position = 'absolute';  // 水印文字的绝对定位
         watermarkStyle.style.whiteSpace = 'nowrap';  // 保证水印文字不换行
         watermarkStyle.style.transform = 'rotate(-45deg)';  // 设置水印的旋转角度
-        watermarkStyle.style.fontSize = '20px';  // 设置水印文字大小
-        watermarkStyle.style.color = 'rgba(0, 0, 0, 0.2)';  // 设置水印文字颜色并带有透明度
+        watermarkStyle.style.fontSize = '30px';  // 设置水印文字大小
+        watermarkStyle.style.color = 'rgba(0, 0, 0, 0.15)';  // 设置水印文字颜色并带有透明度
         watermarkStyle.style.userSelect = 'none';  // 防止水印文字被选中
 
         // 填充页面，创建多个水印并按网格分布
-        for (let i = 0; i < window.innerWidth; i += 200) {  // 设置水印横向间隔，每个水印之间150px
-            for (let j = 0; j < window.innerHeight; j += 200) {  // 设置水印纵向间隔，每个水印之间150px
+        for (let i = 0; i < window.innerWidth; i += 300) {  // 设置水印横向间隔，每个水印之间150px
+            for (let j = 0; j < window.innerHeight; j += 300) {  // 设置水印纵向间隔，每个水印之间150px
                 const watermarkClone = watermarkStyle.cloneNode();  // 克隆水印样式
                 watermarkClone.style.left = `${i}px`;  // 设置水印在页面中的水平位置
                 watermarkClone.style.top = `${j}px`;  // 设置水印在页面中的垂直位置
