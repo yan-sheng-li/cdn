@@ -142,7 +142,6 @@
       position: absolute;
       top: -8px;
       right: 8px;
-      background: #60a5fa;
       color: white;
       padding: 2px 6px;
       border-radius: 4px;
@@ -153,7 +152,7 @@
     }
 
     body.dark-theme .latest-badge {
-      background: #3b82f6;
+      background: #c83bf6;
     }
 
     /* 暗色主题 */
@@ -289,7 +288,7 @@
         const serviceInfoEl = document.getElementById("service-info");
         serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
-            <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:15%;height:auto;" alt="">项目进度</span></h3>
+            <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
             
             </div>
           <p class='lead'>编号：${serviceInfo.number}</p>
@@ -310,7 +309,7 @@
             <div class="timeline__content ${isFirst ? 'is-current' : ''}" ${isFirst ? 'style="position: relative;"' : ''}>
               ${isFirst ? '<span class="latest-badge">New</span>' : ''}
               <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
-              <h3>✅${node.title}</h3>
+              <h3>${isFirst ? '🔄' : '✅'}${node.title}</h3>
               <p>${node.description}</p>
               ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
             </div>
