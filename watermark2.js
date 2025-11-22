@@ -1,129 +1,172 @@
 (function () {
-    // 设置水印文本内容，可以设置为两行或更多
-    const watermarkText = ['© 木子空间'];  // 水印内容数组，第一行和第二行文字
+    // ============ 获取 URL 参数 ============
+    function getUrlParam(name) {
+        const url = new URL(location.href);
+        // 兼容直接引入的 script 标签上的参数
+        const scripts = document.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            const src = scripts[i].src;
+            if (src && src.includes('watermark2.js')) {
+                const u = new URL(src);
+                if (u.searchParams.has(name)) {
+                    return u.searchParams.get(name);
+                }
+            }
+        }
+        return null;
+    }
 
-    // 设置水印透明度（值越小透明度越高）
-    const watermarkOpacity = 0.20;
+    // ============ 配置项（支持动态覆盖） ============
+    const urlOpacity = getUrlParam('opacity');
+    const urlText = getUrlParam('text');
+    const urlHideBar = getUrlParam('hidebar');
 
-    // 底部横向滚动内容条配置
+    const watermarkOpacity = urlOpacity !== null ? parseFloat(urlOpacity) : 0.20;
+    const hideScrollingBar = urlHideBar === '1' || urlHideBar === 'true';
+
+    // 支持换行：用 %0A 或 \n 编码换行
+    let watermarkText = ['© 木子空间'];
+    if (urlText) {
+        try {
+            const decoded = decodeURIComponent(urlText.replace(/\\n/g, '\n'));
+            watermarkText = decoded.split('\n').filter(t => t.trim());
+            if (watermarkText.length === 0) watermarkText = ['© 木子空间'];
+        } catch (e) {
+            console.warn('水印文字解析失败，使用默认值');
+        }
+    }
+
+    // 底部滚动条配置（可通过 hidebar=1 隐藏）
     const scrollingBar = {
-        content: '📢木子空间：项目定制 | 远程调试 | Bug审查修复 | 项目升级改造 | 问题探讨 （手机/微信: 17641244340）',  // 滚动文本内容（可重复以增强效果）
-        height: '40px',  // 条高度
-        backgroundColor: '#f8f9fa',  // 背景色
-        textColor: '#0a61e4ff',  // 文字颜色
-        fontSize: '16px',  // 字体大小
-        speed: '20s',  // 滚动速度（越小越快）
-        repeat: 1  // 内容重复次数（为了无缝滚动）
+        content: '📢木子空间：项目定制 | 远程调试 | Bug审查修复 | 项目升级改造 | 问题探讨 （手机/微信: 17641244340）',
+        height: '40px',
+        backgroundColor: '#f8f9fa',
+        textColor: '#0a61e4ff',
+        fontSize: '16px',
+        speed: '25s',
+        repeat: 2
     };
 
-    // 创建水印（优化：使用CSS动画或更高效的DOM生成，避免过度循环）
+    // ============ 创建水印 ============
     function createWatermark() {
-        // 创建水印容器，用来包裹水印元素
-        const watermarkContainer = document.createElement('div');
-        watermarkContainer.id = 'watermark-container';  // 添加ID，便于后续管理
-        watermarkContainer.style.cssText = `
+        let container = document.getElementById('watermark-container');
+        if (container) container.remove();
+
+        container = document.createElement('div');
+        container.id = 'watermark-container';
+        container.style.cssText = `
             pointer-events: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 9999;
             opacity: ${watermarkOpacity};
             overflow: hidden;
         `;
 
-        // 创建单个水印样式（优化：使用CSS变量和模板）
-        const singleWatermarkStyle = `
+        const singleStyle = `
             position: absolute;
             white-space: nowrap;
             transform: rotate(-45deg);
             font-size: 30px;
+            font-weight: bold;
             color: rgba(0, 0, 0, 0.15);
             user-select: none;
+            line-height: 1.4;
         `;
 
-        // 计算网格步长（优化：动态计算以更好地覆盖视口，避免固定步长导致边缘空白）
-        const stepX = 250;  // 横向步长（优化为更密以覆盖更好）
-        const stepY = 250;  // 纵向步长
+        const step = 250;
 
-        // 生成水印网格（限制循环次数，避免性能问题）
-        for (let i = -stepX; i < window.innerWidth + stepX; i += stepX) {
-            for (let j = -stepY; j < window.innerHeight + stepY; j += stepY) {
-                const watermarkClone = document.createElement('div');
-                watermarkClone.style.cssText = singleWatermarkStyle + `left: ${i}px; top: ${j}px;`;
-                watermarkClone.innerHTML = watermarkText.map(line => `<div>${line}</div>`).join('');
-                watermarkContainer.appendChild(watermarkClone);
+        for (let x = -step; x < window.innerWidth + step; x += step) {
+            for (let y = -step; y < window.innerHeight + step; y += step) {
+                const div = document.createElement('div');
+                div.style.cssText = singleStyle + `left:${x}px;top:${y}px;`;
+                div.innerHTML = watermarkText.map(t => `<div>${t}</div>`).join('');
+                container.appendChild(div);
             }
         }
 
-        document.body.appendChild(watermarkContainer);
-
-        // 监听窗口大小变化，重新生成水印（优化：添加resize事件处理响应式）
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                const existing = document.getElementById('watermark-container');
-                if (existing) existing.remove();
-                createWatermark();  // 递归调用，但仅在resize时
-            }, 250);  // 防抖
-        });
+        document.body.appendChild(container);
     }
 
-    // 创建底部横向滚动内容条
+    // ============ 创建底部滚动条 ============
     function createScrollingBar() {
-        const scrollContainer = document.createElement('div');
-        scrollContainer.style.cssText = `
+        if (hideScrollingBar) return;
+
+        let bar = document.getElementById('custom-scrolling-bar');
+        if (bar) bar.remove();
+
+        bar = document.createElement('div');
+        bar.id = 'custom-scrolling-bar';
+        bar.style.cssText = `
             position: fixed;
-            bottom: 0;
-            left: 0;
+            bottom: 0; left: 0;
             width: 100%;
             height: ${scrollingBar.height};
-            background-color: ${scrollingBar.backgroundColor};
+            background: ${scrollingBar.backgroundColor};
             overflow: hidden;
-            z-index: 9998;  // 略低于水印
-            border-top: 1px solid #ddd;  // 添加上边框分隔
+            z-index: 9998;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         `;
 
-        const scrollInner = document.createElement('div');
-        const repeatedContent = scrollingBar.content.repeat(scrollingBar.repeat);  // 重复内容以实现无缝滚动
-        scrollInner.innerHTML = `<span style="white-space: nowrap; display: inline-block; padding-left: 100%;">${repeatedContent}</span>`;  // 初始偏移以启动滚动
-
-        scrollInner.style.cssText = `
+        const content = scrollingBar.content.repeat(scrollingBar.repeat + 1);
+        const inner = document.createElement('div');
+        inner.innerHTML = `<span style="display:inline-block;padding-left:100%;white-space:nowrap;">${content}</span>`;
+        inner.style.cssText = `
             animation: scroll-left ${scrollingBar.speed} linear infinite;
             font-size: ${scrollingBar.fontSize};
             color: ${scrollingBar.textColor};
             line-height: ${scrollingBar.height};
+            font-weight: 500;
         `;
 
-        // 添加CSS动画（优化：内联样式定义动画，避免全局污染）
-        if (!document.getElementById('scroll-animation-style')) {  // 避免重复添加样式
-            const styleSheet = document.createElement('style');
-            styleSheet.id = 'scroll-animation-style';
-            styleSheet.textContent = `
+        // 注入动画（只注入一次）
+        if (!document.getElementById('watermark-scroll-style')) {
+            const style = document.createElement('style');
+            style.id = 'watermark-scroll-style';
+            style.textContent = `
                 @keyframes scroll-left {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-100%); }
+                    from { transform: translateX(0); }
+                    to { transform: translateX(-50%); }
                 }
             `;
-            document.head.appendChild(styleSheet);
+            document.head.appendChild(style);
         }
 
-        scrollContainer.appendChild(scrollInner);
-        document.body.appendChild(scrollContainer);
+        bar.appendChild(inner);
+        document.body.appendChild(bar);
     }
 
-    // 页面加载完成后调用所有创建函数（优化：分离函数，便于维护）
-    window.addEventListener('DOMContentLoaded', () => {
+    // ============ 初始化 ============
+    function init() {
         createWatermark();
         createScrollingBar();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // 窗口变化重新生成水印（防抖）
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            createWatermark();
+            if (!hideScrollingBar) createScrollingBar();
+        }, 300);
     });
 
-    // 额外优化：防止脚本被移除或禁用（可选，添加MutationObserver监控body变化）
+    // 防止被移除（MutationObserver）
     const observer = new MutationObserver(() => {
         if (!document.getElementById('watermark-container')) {
             createWatermark();
+        }
+        if (!hideScrollingBar && !document.getElementById('custom-scrolling-bar')) {
+            createScrollingBar();
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
