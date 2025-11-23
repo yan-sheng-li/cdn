@@ -193,171 +193,301 @@
 
 
 
-
-
     <script>
+    // ==================== IndexedDB 简单封装 ====================
+    const DB_NAME = 'AudioPlayerDB';
+    const STORE_FILES = 'files';
+    const STORE_META = 'meta';
+    let db = null;
 
-        const supportedFormats = ['.mp3', '.wav', '.ogg', '.flac', '.m4a'];
-        let wavesurfer = WaveSurfer.create({
-            container: '#waveform',
-            waveColor: '#ccc',
-            progressColor: '#007bff',
-            height: 96,
-            normalize: true,
-            responsive: true,
-            plugins: [WaveSurfer.regions.create()]
-        });
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, 3);  // 版本+1以重建
 
-        let region = null;
-        let loopEnabled = false;
-
-        let currentTrackIndex = null;
-
-        function loadAudioFromBlob(blob, index = null) {
-            const url = URL.createObjectURL(blob);
-            wavesurfer.load(url);
-            currentTrackIndex = index;
-            highlightCurrentTrack();
-        }
-
-        // 高亮当前播放曲目
-        function highlightCurrentTrack() {
-            const listItems = document.querySelectorAll('#trackList li');
-            listItems.forEach((li, i) => {
-                if (i === currentTrackIndex) {
-                    li.classList.add('playing');
-                    if (!li.dataset.originalText) {
-                        li.dataset.originalText = li.textContent;
-                    }
-                    li.textContent = '▶ ' + li.dataset.originalText;
-                } else {
-                    li.classList.remove('playing');
-                    if (li.dataset.originalText) {
-                        li.textContent = li.dataset.originalText;
-                    }
+            req.onupgradeneeded = e => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_FILES)) {
+                    db.createObjectStore(STORE_FILES, { keyPath: 'key' });
                 }
-            });
-        }
-
-        document.getElementById('audioFile').addEventListener('change', function () {
-            const file = this.files[0];
-            if (file) loadAudioFromBlob(file);
-        });
-
-        wavesurfer.on('ready', () => {
-            const duration = wavesurfer.getDuration();
-            if (region) region.remove();
-            region = wavesurfer.addRegion({
-                start: 0,
-                end: Math.min(10, duration),
-                color: 'rgba(0, 123, 255, 0.2)',
-                drag: true,
-                resize: true,
-                loop: loopEnabled
-            });
-        });
-
-        function playRegion() {
-            if (region) {
-                wavesurfer.play(region.start, region.end);
-            }
-        }
-
-        function toggleLoop() {
-            loopEnabled = !loopEnabled;
-            document.getElementById('loopStatus').textContent = loopEnabled ? '开启' : '关闭';
-            if (region) region.loop = loopEnabled;
-        }
-
-        function pause() {
-            wavesurfer.pause();
-        }
-
-        document.getElementById('speedControl').addEventListener('change', function () {
-            const speed = parseFloat(this.value);
-            wavesurfer.setPlaybackRate(speed);
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                if (wavesurfer.isPlaying()) {
-                    wavesurfer.pause();
-                } else {
-                    const time = wavesurfer.getCurrentTime();
-                    if (region && (time < region.start || time > region.end)) {
-                        wavesurfer.play(region.start, region.end);
-                    } else {
-                        wavesurfer.play();
-                    }
+                if (!db.objectStoreNames.contains(STORE_META)) {
+                    db.createObjectStore(STORE_META, { keyPath: 'key' });
                 }
-            }
+            };
+            req.onsuccess = e => {
+                db = e.target.result;
+                resolve(db);
+            };
+            req.onerror = e => reject(e);
+        });
+    }
 
-            if (e.code === 'Enter') {
-                e.preventDefault();
-                if (region) {
-                    wavesurfer.setCurrentTime(region.start);
-                }
-            }
+    async function saveFile(key, blob) {
+        const tx = db.transaction(STORE_FILES, 'readwrite');
+        await tx.objectStore(STORE_FILES).put({ key, blob });
+        await tx.complete;
+    }
 
-            // 音量控制：上箭头增加音量，下箭头减少音量
-            if (e.code === 'ArrowUp') {
-                e.preventDefault();
-                let volume = wavesurfer.getVolume();
-                volume = Math.min(1, volume + 0.1); // 增加音量，最大为1
-                wavesurfer.setVolume(volume);
-            }
+    async function getFile(key) {
+        const tx = db.transaction(STORE_FILES, 'readonly');
+        const store = tx.objectStore(STORE_FILES);
+        const req = store.get(key);
+        return new Promise((resolve) => {
+            req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+        });
+    }
 
-            if (e.code === 'ArrowDown') {
-                e.preventDefault();
-                let volume = wavesurfer.getVolume();
-                volume = Math.max(0, volume - 0.1); // 减少音量，最小为0
-                wavesurfer.setVolume(volume);
-            }
+    async function saveMeta(key, value) {
+        const tx = db.transaction(STORE_META, 'readwrite');
+        await tx.objectStore(STORE_META).put({ key, value });
+        await tx.complete;
+    }
 
-            // 快进/快退：右箭头快进，左箭头快退
-            if (e.code === 'ArrowRight') {
-                e.preventDefault();
-                const currentTime = wavesurfer.getCurrentTime();
-                const duration = wavesurfer.getDuration();
-                const newTime = Math.min(duration, currentTime + 5); // 快进5秒
-                wavesurfer.setCurrentTime(newTime);
-            }
+    async function getMeta(key) {
+        const tx = db.transaction(STORE_META, 'readonly');
+        const store = tx.objectStore(STORE_META);
+        const req = store.get(key);
+        return new Promise((resolve) => {
+            req.onsuccess = () => resolve(req.result ? req.result.value : null);
+        });
+    }
 
-            if (e.code === 'ArrowLeft') {
-                e.preventDefault();
-                const currentTime = wavesurfer.getCurrentTime();
-                const newTime = Math.max(0, currentTime - 5); // 快退5秒
-                wavesurfer.setCurrentTime(newTime);
+    async function clearAll() {
+        const tx = db.transaction([STORE_FILES, STORE_META], 'readwrite');
+        await tx.objectStore(STORE_FILES).clear();
+        await tx.objectStore(STORE_META).clear();
+        await tx.complete;
+    }
+    // ===========================================================
+
+    const supportedFormats = ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac', '.webm'];
+    let wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#ccc',
+        progressColor: '#007bff',
+        height: 96,
+        normalize: true,
+        responsive: true,
+        plugins: [WaveSurfer.regions.create()]
+    });
+
+    let region = null;
+    let loopEnabled = false;
+    let currentTrackIndex = null;
+    let currentFileKey = null;
+
+    // ---------- 高亮当前播放曲目 ----------
+    function highlightCurrentTrack() {
+        const listItems = document.querySelectorAll('#trackList li');
+        listItems.forEach((li, i) => {
+            if (i === currentTrackIndex) {
+                li.classList.add('playing');
+                if (!li.dataset.originalText) li.dataset.originalText = li.textContent.replace('▶ ', '');
+                li.textContent = '▶ ' + li.dataset.originalText;
+            } else {
+                li.classList.remove('playing');
+                if (li.dataset.originalText) li.textContent = li.dataset.originalText;
             }
         });
+    }
 
-        // 文件夹选择
-        document.getElementById('folderInput').addEventListener('change', function () {
-            const files = Array.from(this.files);
-            const audioFiles = files.filter(file => supportedFormats.some(ext => file.name.toLowerCase().endsWith(ext)));
+    // ---------- 加载音频（支持 Blob） ----------
+    async function loadAudioFromBlob(blob, index = null, fileKey = null) {
+        const url = URL.createObjectURL(blob);
+        wavesurfer.load(url);
+        currentTrackIndex = index;
+        currentFileKey = fileKey;
+        highlightCurrentTrack();
+
+        if (fileKey) await saveMeta('lastFileKey', fileKey);
+        if (index !== null) await saveMeta('lastTrackIndex', index);
+    }
+
+    // ---------- 单个文件选择 ----------
+    document.getElementById('audioFile').addEventListener('change', async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const key = `single_${Date.now()}_${file.name}`;
+        await saveFile(key, file);
+        await saveMeta('mode', 'single');
+        await saveMeta('lastFileKey', key);
+
+        loadAudioFromBlob(file, null, key);
+    });
+
+    // ---------- 文件夹选择 ----------
+    document.getElementById('folderInput').addEventListener('change', async function () {
+        const files = Array.from(this.files);
+        const audioFiles = files.filter(f => 
+            supportedFormats.some(ext => f.name.toLowerCase().endsWith(ext))
+        );
+
+        if (audioFiles.length === 0) return;
+
+        await clearAll();  // 清空旧数据
+
+        const listContainer = document.getElementById('trackList');
+        listContainer.innerHTML = '';
+
+        // 保存文件名映射（用于精确恢复）
+        const fileNames = [];
+        const fileKeys = [];
+
+        for (let i = 0; i < audioFiles.length; i++) {
+            const file = audioFiles[i];
+            const key = `folder_${i}_${encodeURIComponent(file.name)}`;  // 编码文件名避免特殊字符问题
+            await saveFile(key, file);
+            fileNames.push(file.webkitRelativePath || file.name);
+            fileKeys.push(key);
+
+            const li = document.createElement('li');
+            li.textContent = fileNames[i];
+            li.dataset.key = key;
+            li.dataset.index = i;
+            li.onclick = async () => {
+                const blob = await getFile(key);
+                if (blob) loadAudioFromBlob(blob, i, key);
+            };
+            listContainer.appendChild(li);
+        }
+
+        // 保存映射表
+        await saveMeta('folderFileNames', fileNames);
+        await saveMeta('folderFileKeys', fileKeys);
+        await saveMeta('mode', 'folder');
+        await saveMeta('folderFileCount', audioFiles.length);
+
+        // 默认加载第一首
+        const firstBlob = await getFile(fileKeys[0]);
+        if (firstBlob) loadAudioFromBlob(firstBlob, 0, fileKeys[0]);
+    });
+
+    // ---------- 页面加载时恢复上次状态 ----------
+    (async () => {
+        await openDB();
+
+        const mode = await getMeta('mode');
+        if (!mode) return;
+
+        if (mode === 'single') {
+            const key = await getMeta('lastFileKey');
+            if (key) {
+                const blob = await getFile(key);
+                if (blob) loadAudioFromBlob(blob, null, key);
+            }
+            return;
+        }
+
+        if (mode === 'folder') {
+            const fileNames = await getMeta('folderFileNames') || [];
+            const fileKeys = await getMeta('folderFileKeys') || [];
+            const count = fileNames.length;
+
+            if (count === 0) return;
 
             const listContainer = document.getElementById('trackList');
             listContainer.innerHTML = '';
 
-            audioFiles.forEach((file, index) => {
+            // 用映射表精确重建列表（无重复）
+            for (let i = 0; i < count; i++) {
+                const key = fileKeys[i];
+                const name = fileNames[i];
+                const blob = await getFile(key);  // 预加载blob以防点击时延迟
+
+                if (!blob) continue;
+
                 const li = document.createElement('li');
-                li.textContent = file.webkitRelativePath || file.name;
-                li.dataset.index = index;
-                li.onclick = () => {
-                    loadAudioFromBlob(file, index);
-                };
+                li.textContent = name;
+                li.dataset.key = key;
+                li.dataset.index = i;
+                li.onclick = () => loadAudioFromBlob(blob, i, key);
                 listContainer.appendChild(li);
-            });
-
-            if (audioFiles.length > 0) {
-                loadAudioFromBlob(audioFiles[0], 0); // 自动加载第一首
             }
+
+            // 恢复最后播放的那首
+            const lastIndex = await getMeta('lastTrackIndex') || 0;
+            const lastKey = fileKeys[lastIndex];
+            if (lastKey) {
+                const blob = await getFile(lastKey);
+                if (blob) {
+                    currentTrackIndex = lastIndex;
+                    loadAudioFromBlob(blob, lastIndex, lastKey);
+                    highlightCurrentTrack();
+                }
+            }
+        }
+    })();
+
+    // ================== 原有功能代码（微调以兼容） ==================
+    wavesurfer.on('ready', () => {
+        const duration = wavesurfer.getDuration();
+        if (region) region.remove();
+        region = wavesurfer.addRegion({
+            start: 0,
+            end: Math.min(10, duration),
+            color: 'rgba(0, 123, 255, 0.2)',
+            drag: true,
+            resize: true,
+            loop: loopEnabled
         });
+    });
 
+    function playRegion() {
+        if (region) wavesurfer.play(region.start, region.end);
+    }
 
-    </script>
+    function toggleLoop() {
+        loopEnabled = !loopEnabled;
+        document.getElementById('loopStatus').textContent = loopEnabled ? '开启' : '关闭';
+        if (region) region.loop = loopEnabled;
+    }
 
+    function pause() {
+        wavesurfer.pause();
+    }
+
+    document.getElementById('speedControl').addEventListener('change', function () {
+        wavesurfer.setPlaybackRate(parseFloat(this.value));
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+            } else {
+                if (region) {
+                    playRegion();
+                } else {
+                    wavesurfer.play();
+                }
+            }
+        }
+        if (e.code === 'Enter') {
+            e.preventDefault();
+            if (region) wavesurfer.setCurrentTime(region.start);
+        }
+        if (e.code === 'ArrowUp') {
+            e.preventDefault();
+            wavesurfer.setVolume(Math.min(1, wavesurfer.getVolume() + 0.1));
+        }
+        if (e.code === 'ArrowDown') {
+            e.preventDefault();
+            wavesurfer.setVolume(Math.max(0, wavesurfer.getVolume() - 0.1));
+        }
+        if (e.code === 'ArrowRight') {
+            e.preventDefault();
+            const currentTime = wavesurfer.getCurrentTime();
+            const duration = wavesurfer.getDuration();
+            wavesurfer.setCurrentTime(Math.min(duration, currentTime + 5));
+        }
+        if (e.code === 'ArrowLeft') {
+            e.preventDefault();
+            const currentTime = wavesurfer.getCurrentTime();
+            wavesurfer.setCurrentTime(Math.max(0, currentTime - 5));
+        }
+    });
+</script>
 
 </body>
 
