@@ -64,16 +64,18 @@ function parseAndGenerate() {
     link = urlMatch[1].split('?')[0]; // 去掉可能的参数
     pwd = pwdMatch ? pwdMatch[1] : "（未检测到密码）";
 
-    const text1 = `${link} 【复制按钮】`;
-    const text2 = `\n打开链接输入密码【${pwd}】即可，无需转存，点击文件立即下载。\n如有问题，请联系店铺客服 【复制按钮】`;
+    const text1 = `${link}`;
+    const text2 = `
+打开链接输入密码【${pwd}】即可，无需转存，点击文件立即下载。
+如有问题，请联系店铺客服`;
 
     document.getElementById('output').innerHTML = 
-        '<strong>第1段（发链接用）：</strong><br>' + text1.replace(/【复制按钮】/g,'<span style="color:#007bff;">【复制按钮】</span>') +
-        '<br><br><strong>第2段（完整说明用）：</strong>' + text2.replace(/【复制按钮】/g,'<span style="color:#007bff;">【复制按钮】</span>');
+        '<strong>第1段（发链接用）：</strong><br>' + text1 +
+        '<br><br><strong>第2段（完整说明用）：</strong>' + text2;
     
     document.getElementById('result').style.display = 'block';
 
-    // 保存供复制用（复制时自动去掉【复制按钮】四个字）
+    // 保存供复制用
     window.toCopy = {
         1: link,
         2: `打开链接输入密码【${pwd}】即可，无需转存，点击文件立即下载。\n如有问题，请联系店铺客服`
