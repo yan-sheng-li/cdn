@@ -38,13 +38,13 @@
 
     // 底部滚动条配置（可通过 hidebar=1 隐藏）
     const scrollingBar = {
-        content: '📢木子空间：项目定制 | 远程调试 | Bug审查修复 | 项目升级改造 | 问题探讨 （手机/微信: 17641244340）',
+        content: '📢木子空间：项目定制开发 | 远程调试 | Bug审查修复 | 项目升级改造 | 问题探讨 （手机/微信: 17641244340）',
         height: '40px',
         backgroundColor: '#f8f9fa',
-        textColor: '#0a61e4ff',
+        textColor: '#498ef5ff',
         fontSize: '16px',
         speed: '25s',
-        repeat: 2
+        repeat: 0
     };
 
     // ============ 创建水印 ============
@@ -128,7 +128,7 @@
             style.textContent = `
                 @keyframes scroll-left {
                     from { transform: translateX(0); }
-                    to { transform: translateX(-50%); }
+                    to { transform: translateX(-100%); }
                 }
             `;
             document.head.appendChild(style);
