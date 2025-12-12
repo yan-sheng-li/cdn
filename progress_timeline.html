@@ -103,6 +103,32 @@
       z-index: 1000;
     }
 
+    /* 查询输入样式 */
+    .query-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .query-input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    .query-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #10b981;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
     /* 时间轴通用 */
     .timeline__content {
       border-radius: 12px;
@@ -254,7 +280,12 @@
 
   <div class="container">
     <div class="service-card">
+      <div class="query-container">
+        <input id="number-input" class="query-input" placeholder="请输入服务编号" />
+        <button id="query-btn" class="query-btn">查询</button>
+      </div>
       <div id="service-info"></div>
+      <div id="error-msg" style="color:#e11d48;margin-top:6px;display:none;"></div>
     </div>
 
     <div class="timeline" id="project-timeline">
@@ -269,81 +300,131 @@
   <script src="https://cdn.jsdelivr.net/gh/squarechip/timeline@master/dist/js/timeline.min.js"></script>
   <script src="https://www.liyansheng.top/cdn/timedown.min.js"></script>
   <script>
-    // 获取路径参数
-    const urlParams = new URLSearchParams(window.location.search);
-    const number = urlParams.get('number');
-    fetch(`https://mini.liyansheng.top/v1/api/targeted-services/service-info/${number}`)
-      .then(response => response.json())
-      .then(data => {
-        const pageData = data.data;
-        // 服务信息数据
-        const serviceInfo = {
-          content: pageData.content,
-          number: pageData.number,
-          customer: pageData.customerName,
-          startTime: pageData.startTime,
-          endTime: pageData.endTime
-        };
-        // 渲染服务信息
-        const serviceInfoEl = document.getElementById("service-info");
-        serviceInfoEl.innerHTML = `
+    // 通用：显示/隐藏错误
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function clearError() {
+      const el = document.getElementById('error-msg');
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    // 加载并渲染服务信息（由用户点击触发）
+    function loadService(number) {
+      if (!number) {
+        showError('请输入有效的编号');
+        return;
+      }
+      clearError();
+      const queryBtn = document.getElementById('query-btn');
+      queryBtn.disabled = true;
+      const prevText = queryBtn.textContent;
+      queryBtn.textContent = '查询中...';
+
+      const itemsContainer = document.getElementById("timeline-items");
+      // 清理旧内容
+      itemsContainer.innerHTML = '';
+      document.getElementById('service-info').innerHTML = '';
+      const countdownEl = document.getElementById('countdown-timer');
+      if (countdownEl) countdownEl.textContent = '';
+
+      fetch(`https://mini.liyansheng.top/v1/api/targeted-services/service-info/${encodeURIComponent(number)}`)
+        .then(response => response.json())
+        .then(data => {
+          const pageData = data.data;
+          if (!pageData) {
+            showError('未找到该编号的数据');
+            return;
+          }
+          const serviceInfo = {
+            content: pageData.content,
+            number: pageData.number,
+            customer: pageData.customerName,
+            startTime: pageData.startTime,
+            endTime: pageData.endTime
+          };
+          const serviceInfoEl = document.getElementById("service-info");
+          serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
-            <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
-            
+              <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
             </div>
-          <p class='lead'>编号：${serviceInfo.number}</p>
-          <p class='lead'>客户：${serviceInfo.customer}</p>
+            <p class='lead'>编号：${serviceInfo.number}</p>
+            <p class='lead'>客户：${serviceInfo.customer}</p>
             <p class='lead'>周期：${new Date(serviceInfo.startTime).toLocaleDateString()} - ${new Date(serviceInfo.endTime).toLocaleDateString()}</p>
-          <p class='lead'>项目：${serviceInfo.content}</p>
-          <p class='lead' id='countdown'>⏳：<span id='countdown-timer'></span></p>
-        `;
-        // 节点数据 JSON，新增 cover 字段（可用图片链接或 base64 占位图）
-        const timelineData = pageData.timeNodeList || [];
-        // 渲染节点，增加 cover 示意图
-        const itemsContainer = document.getElementById("timeline-items");
-        timelineData.forEach((node, index) => {
-          const isFirst = index === 0;// 判断是否第一个
-          const item = document.createElement("div");
-          item.className = "timeline__item";
-          item.innerHTML = `
-            <div class="timeline__content ${isFirst ? 'is-current' : ''}" ${isFirst ? 'style="position: relative;"' : ''}>
-              ${isFirst ? '<span class="latest-badge">New</span>' : ''}
-              <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
-              <h3>${isFirst ? '🔄' : '✅'}${node.title}</h3>
-              <p>${node.description}</p>
-              ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
-            </div>
+            <p class='lead'>项目：${serviceInfo.content}</p>
+            <p class='lead' id='countdown'>⏳：<span id='countdown-timer'></span></p>
           `;
-          itemsContainer.appendChild(item);
-        });
-        // 初始化时间轴
-        timeline(document.querySelectorAll('.timeline'), {
-          verticalStartPosition: 'right',
-          verticalTrigger: '150px'
-        });
-        // 主题切换逻辑
-        const btn = document.getElementById('theme-toggle');
-        btn.addEventListener('click', () => {
-          document.body.classList.toggle('dark-theme');
-          document.body.classList.toggle('light-theme');
-          btn.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
-        });
-        btn.textContent = '切换为浅色';
-        // 初始化倒计时，确保节点已渲染
-        new Timedown({
-          id: 1,
-          endTime: new Date(serviceInfo.endTime).getTime(),
-          endText: '已结束',
-          selector: '#countdown-timer',
-          format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
-          endCallback: () => alert('倒计时结束！')
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching service info:', error);
-      });
 
+          const timelineData = pageData.timeNodeList || [];
+          timelineData.forEach((node, index) => {
+            const isFirst = index === 0;
+            const item = document.createElement("div");
+            item.className = "timeline__item";
+            item.innerHTML = `
+              <div class="timeline__content ${isFirst ? 'is-current' : ''}" ${isFirst ? 'style="position: relative;"' : ''}>
+                ${isFirst ? '<span class="latest-badge">New</span>' : ''}
+                <div class="meta"><span>⏰${new Date(node.createdAt).toLocaleString()}</span></div>
+                <h3>${isFirst ? '🔄' : '✅'}${node.title}</h3>
+                <p>${node.description}</p>
+                ${node.coverUrl ? `<div style='margin:8px 0'><img src='${node.coverUrl}' alt='示意图' style='max-width:80%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);'></div>` : ''}
+              </div>
+            `;
+            itemsContainer.appendChild(item);
+          });
 
+          // 初始化/刷新时间轴
+          timeline(document.querySelectorAll('.timeline'), {
+            verticalStartPosition: 'right',
+            verticalTrigger: '150px'
+          });
+
+          // 初始化倒计时
+          try {
+            new Timedown({
+              id: 1,
+              endTime: new Date(serviceInfo.endTime).getTime(),
+              endText: '已结束',
+              selector: '#countdown-timer',
+              format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
+              endCallback: () => alert('倒计时结束！')
+            });
+          } catch (e) {
+            console.warn('Timedown 初始化失败', e);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching service info:', error);
+          showError('请求失败，请稍后重试');
+        })
+        .finally(() => {
+          queryBtn.disabled = false;
+          queryBtn.textContent = prevText;
+        });
+    }
+
+    // 绑定查询按钮与回车事件
+    document.getElementById('query-btn').addEventListener('click', () => {
+      const val = document.getElementById('number-input').value.trim();
+      loadService(val);
+    });
+    document.getElementById('number-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = e.target.value.trim();
+        loadService(val);
+      }
+    });
+
+    // 主题切换逻辑 保持不变
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      document.body.classList.toggle('light-theme');
+      themeToggle.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
+    });
+    themeToggle.textContent = '切换为浅色';
   </script>
 </body>
 
