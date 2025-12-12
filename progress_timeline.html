@@ -89,18 +89,27 @@
 
     /* 按钮样式 */
     .theme-toggle {
-      position: fixed;
-      top: 46px;
-      right: 16px;
-      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 6px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       background: #60a5fa;
       color: #fff;
-      font-size: 14px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
-      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, .12);
+      transition: background 0.2s, transform 0.12s;
+    }
+    .theme-toggle:active { transform: scale(.98); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .error-msg {
+      color: #e11d48;
+      margin-top: 6px;
+      display: none;
+      font-size: 13px;
     }
 
     /* 查询输入样式 */
@@ -269,7 +278,7 @@
 </head>
 
 <body class="dark-theme">
-  <button class="theme-toggle" id="theme-toggle">切换主题</button>
+  
 
   <!-- 滚动通知公告 -->
   <div class="marquee-container">
@@ -283,9 +292,12 @@
       <div class="query-container">
         <input id="number-input" class="query-input" placeholder="请输入服务编号" />
         <button id="query-btn" class="query-btn">查询</button>
+        <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
+          <!-- icon 会由脚本初始化 -->
+        </button>
       </div>
       <div id="service-info"></div>
-      <div id="error-msg" style="color:#e11d48;margin-top:6px;display:none;"></div>
+      <div id="error-msg" class="error-msg" aria-live="polite"></div>
     </div>
 
     <div class="timeline" id="project-timeline">
@@ -349,11 +361,10 @@
           const serviceInfoEl = document.getElementById("service-info");
           serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
-              <h3><span>木子空间<img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
+              <h3><span><img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
             </div>
             <p class='lead'>编号：${serviceInfo.number}</p>
             <p class='lead'>客户：${serviceInfo.customer}</p>
-            <p class='lead'>周期：${new Date(serviceInfo.startTime).toLocaleDateString()} - ${new Date(serviceInfo.endTime).toLocaleDateString()}</p>
             <p class='lead'>项目：${serviceInfo.content}</p>
             <p class='lead' id='countdown'>⏳：<span id='countdown-timer'></span></p>
           `;
@@ -388,8 +399,7 @@
               endTime: new Date(serviceInfo.endTime).getTime(),
               endText: '已结束',
               selector: '#countdown-timer',
-              format: '{d}天 {hh}小时 {mm}分钟 {ss}秒',
-              endCallback: () => alert('倒计时结束！')
+              format: '{d}天 {hh}小时 {mm}分钟 {ss}秒'
             });
           } catch (e) {
             console.warn('Timedown 初始化失败', e);
@@ -417,14 +427,42 @@
       }
     });
 
-    // 主题切换逻辑 保持不变
+    // 主题切换逻辑：使用图标（太阳 / 月亮）替换文字
     const themeToggle = document.getElementById('theme-toggle');
+    function sunSVG() {
+      return `
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <g stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="M4.93 4.93l1.41 1.41" />
+            <path d="M17.66 17.66l1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="M4.93 19.07l1.41-1.41" />
+            <path d="M17.66 6.34l1.41-1.41" />
+          </g>
+        </svg>`;
+    }
+    function moonSVG() {
+      return `
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.5" fill="none" />
+        </svg>`;
+    }
+    function updateThemeIcon() {
+      if (!themeToggle) return;
+      const isDark = document.body.classList.contains('dark-theme');
+      themeToggle.innerHTML = isDark ? moonSVG() : sunSVG();
+      themeToggle.title = isDark ? '当前：暗色' : '当前：浅色';
+    }
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('dark-theme');
       document.body.classList.toggle('light-theme');
-      themeToggle.textContent = document.body.classList.contains('dark-theme') ? '切换为浅色' : '切换为暗色';
+      updateThemeIcon();
     });
-    themeToggle.textContent = '切换为浅色';
+    updateThemeIcon();
   </script>
 </body>
 
