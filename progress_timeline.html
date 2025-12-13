@@ -20,7 +20,6 @@
     .container {
       max-width: 960px;
       margin: 0 auto;
-      &#10;
       padding: 0 20px;
     }
 
@@ -290,7 +289,7 @@
   <div class="container">
     <div class="service-card">
       <div class="query-container">
-        <input id="number-input" class="query-input" placeholder="请输入服务编号" />
+        <input id="number-input" class="query-input" placeholder="请输入：服务编号 或下单平台订单号" />
         <button id="query-btn" class="query-btn">查询</button>
         <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">
           <!-- icon 会由脚本初始化 -->
@@ -356,15 +355,17 @@
             number: pageData.number,
             customer: pageData.customerName,
             startTime: pageData.startTime,
-            endTime: pageData.endTime
+            endTime: pageData.endTime,
+            sourcePlatform: pageData.sourcePlatform
           };
+          console.log('Service Info:', serviceInfo);
           const serviceInfoEl = document.getElementById("service-info");
           serviceInfoEl.innerHTML = `
             <div style='text-align:center;'>
               <h3><span><img src="https://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png" style="max-width:10%;height:auto;" alt="">项目进度</span></h3>
             </div>
             <p class='lead'>编号：${serviceInfo.number}</p>
-            <p class='lead'>客户：${serviceInfo.customer}</p>
+            <p class='lead'>客户：${serviceInfo.sourcePlatform}_${serviceInfo.customer[0]}***${serviceInfo.customer[serviceInfo.customer.length - 1]}</p>
             <p class='lead'>项目：${serviceInfo.content}</p>
             <p class='lead' id='countdown'>⏳：<span id='countdown-timer'></span></p>
           `;
