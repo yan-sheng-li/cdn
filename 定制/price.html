@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>项目加急报价评估｜木子空间</title>
+
+  <!-- Bulma -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+  <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+  <style>
+    .logo {
+      max-height: 60px;
+      margin-right: 12px;
+    }
+  </style>
+</head>
+
+<body class="section">
+<div class="container">
+  <div class="column is-half is-offset-one-quarter">
+
+    <!-- Header -->
+    <div class="level mb-5">
+      <div class="level-left">
+        <img class="logo" src="http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png">
+        <div>
+          <p class="title is-1 mb-5">项目加急报价评估</p>
+          <p class="subtitle is-4">木子空间</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 原报价 -->
+    <div class="field">
+      <label class="label">原报价（元）</label>
+      <input class="input calc" type="number" id="basePrice" placeholder="如 10000">
+    </div>
+
+    <!-- 原工期 -->
+    <div class="field">
+      <label class="label">原工期（小时）</label>
+      <input class="input calc" type="number" id="originalHours" placeholder="如 40">
+    </div>
+
+    <!-- 实际工期 -->
+    <div class="field">
+      <label class="label">实际工期（小时）</label>
+      <input class="input calc" type="number" id="actualHours" placeholder="如 16">
+    </div>
+
+    <hr>
+
+    <!-- 结果 -->
+    <div class="box">
+      <p>时间压缩比例：<strong id="compression">-</strong></p>
+      <p>加急系数：<strong id="factor">-</strong></p>
+      <p class="mt-2">
+        项目总价：
+        <span class="has-text-danger has-text-weight-bold" id="totalPrice">-</span>
+      </p>
+    </div>
+
+    <!-- 说明 -->
+    <article class="message is-info">
+      <div class="message-body" id="explanation">
+        请输入完整信息以评估加急报价
+      </div>
+    </article>
+
+  </div>
+</div>
+
+<script>
+function getFactor(rate) {
+  if (rate <= 0) return 1;
+  if (rate <= 0.2) return 1.2;
+  if (rate <= 0.4) return 1.5;
+  if (rate <= 0.6) return 1.8;
+  return 2.5;
+}
+
+function calculate() {
+  const basePrice = parseFloat($('#basePrice').val());
+  const original = parseFloat($('#originalHours').val());
+  const actual = parseFloat($('#actualHours').val());
+
+  if (!basePrice || !original || !actual || actual > original) {
+    $('#compression,#factor,#totalPrice').text('-');
+    $('#explanation').text('请输入合理的小时数据');
+    return;
+  }
+
+  const compression = (original - actual) / original;
+  const factor = getFactor(compression);
+  const total = basePrice * factor;
+
+  $('#compression').text((compression * 100).toFixed(0) + '%');
+  $('#factor').text(factor.toFixed(1));
+  $('#totalPrice').text('¥ ' + total.toLocaleString());
+
+  $('#explanation').text(
+    `原工期 ${original} 小时，压缩至 ${actual} 小时（压缩 ${(compression * 100).toFixed(0)}%），按加急系数 ${factor} 计价。`
+  );
+}
+
+// 输入即算
+$('.calc').on('input', calculate);
+</script>
+
+</body>
+</html>
