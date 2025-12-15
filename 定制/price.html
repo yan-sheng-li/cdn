@@ -1,136 +1,158 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-  <meta charset="UTF-8">
-  <title>项目加急报价评估｜木子空间</title>
+    <meta charset="UTF-8">
+    <title>项目加急报价评估｜木子空间</title>
 
-  <!-- Bulma -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
-  <!-- jQuery -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <style>
+        .logo {
+            max-height: 60px;
+            margin-right: 12px;
+        }
 
-  <style>
-    .logo {
-      max-height: 60px;
-      margin-right: 12px;
-    }
-    .hint {
-      font-size: 0.85rem;
-      color: #777;
-    }
-  </style>
+        .hint {
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+    </style>
 </head>
 
 <body class="section">
-<div class="container">
-  <div class="column is-half is-offset-one-quarter">
+    <div class="container">
+        <div class="column is-half is-offset-one-quarter">
 
-    <!-- Header -->
-    <div class="level mb-5">
-      <div class="level-left">
-        <img class="logo" src="http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png">
-        <div>
-          <p class="title is-4 mb-1">项目加急报价评估</p>
-          <p class="subtitle is-6">木子空间</p>
+            <!-- Header -->
+            <div class="level mb-5">
+                <div class="level-left">
+                    <img class="logo" src="http://cdn.qiniu.liyansheng.top/img/graphic-4005286_640.png">
+                    <div>
+                        <p class="title is-4 mb-1">项目加急报价评估</p>
+                        <p class="subtitle is-6">木子空间</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 原报价 -->
+            <div class="field">
+                <label class="label">原报价（元）</label>
+                <input class="input calc" type="number" id="basePrice" placeholder="如 10000">
+            </div>
+
+            <!-- 原定完成时间 -->
+            <div class="field">
+                <label class="label">原定完成时间</label>
+                <input class="input calc" type="datetime-local" id="originalDeadline">
+            </div>
+
+            <!-- 加急完成时间 -->
+            <div class="field">
+                <label class="label">加急完成时间</label>
+                <input class="input calc" type="datetime-local" id="rushDeadline">
+            </div>
+
+            <hr>
+
+            <!-- 兜底规则 -->
+            <div class="field">
+                <label class="label">最低加急费（元）</label>
+                <input class="input calc" type="number" id="minRushFee" value="500">
+            </div>
+
+            <div class="field">
+                <label class="label">最低项目总价（元）</label>
+                <input class="input calc" type="number" id="minTotalPrice" value="3000">
+            </div>
+
+            <hr>
+
+            <!-- 结果 -->
+            <div class="box">
+                <p>时间压缩比例：<strong id="compression">-</strong></p>
+                <p>加急系数：<strong id="factor">-</strong></p>
+                <p>理论总价：<strong id="rawPrice">-</strong></p>
+                <p class="mt-2">
+                    最终报价：
+                    <span class="has-text-danger has-text-weight-bold" id="finalPrice">-</span>
+                </p>
+            </div>
+
+            <!-- 报价说明 -->
+            <div class="field">
+                <label class="label">报价说明（可复制）</label>
+                <textarea class="textarea" id="quoteText" rows="5" readonly></textarea>
+            </div>
+
+            <button class="button is-link is-fullwidth" id="copyBtn">一键复制报价说明</button>
+
         </div>
-      </div>
     </div>
 
-    <!-- 原报价 -->
-    <div class="field">
-      <label class="label">原报价（元）</label>
-      <input class="input calc" type="number" id="basePrice" placeholder="如 10000">
-    </div>
+    <script>
+        function getFactor(rate) {
+            if (rate <= 0) return 1;
+            if (rate <= 0.2) return 1.2;
+            if (rate <= 0.4) return 1.5;
+            if (rate <= 0.6) return 1.8;
+            return 2.5;
+        }
 
-    <!-- 原定完成时间 -->
-    <div class="field">
-      <label class="label">原定完成时间</label>
-      <input class="input calc" type="datetime-local" id="originalDeadline">
-      <p class="hint">基于当前时间自动计算原工期</p>
-    </div>
+        function hoursBetween(now, future) {
+            return (future - now) / 36e5;
+        }
 
-    <!-- 加急完成时间 -->
-    <div class="field">
-      <label class="label">加急完成时间</label>
-      <input class="input calc" type="datetime-local" id="rushDeadline">
-      <p class="hint">必须早于原定完成时间</p>
-    </div>
+        function calculate() {
+            const base = +$('#basePrice').val();
+            const minRush = +$('#minRushFee').val();
+            const minTotal = +$('#minTotalPrice').val();
 
-    <hr>
+            const o = new Date($('#originalDeadline').val());
+            const r = new Date($('#rushDeadline').val());
+            const now = new Date();
 
-    <!-- 结果 -->
-    <div class="box">
-      <p>原工期：<strong id="originalHours">-</strong> 小时</p>
-      <p>加急工期：<strong id="rushHours">-</strong> 小时</p>
-      <p>时间压缩比例：<strong id="compression">-</strong></p>
-      <p>加急系数：<strong id="factor">-</strong></p>
-      <p class="mt-2">
-        项目总价：
-        <span class="has-text-danger has-text-weight-bold" id="totalPrice">-</span>
-      </p>
-    </div>
+            if (!base || !o || !r || r >= o || r <= now) return;
 
-    <!-- 说明 -->
-    <article class="message is-info">
-      <div class="message-body" id="explanation">
-        请输入完整信息以评估加急报价
-      </div>
-    </article>
+            const oH = hoursBetween(now, o);
+            const rH = hoursBetween(now, r);
+            const rate = (oH - rH) / oH;
+            const factor = getFactor(rate);
 
-  </div>
-</div>
+            const raw = base * factor;
+            const minRushTotal = base + minRush;
+            const final = Math.max(raw, minTotal, minRushTotal);
 
-<script>
-function getFactor(rate) {
-  if (rate <= 0) return 1;
-  if (rate <= 0.2) return 1.2;
-  if (rate <= 0.4) return 1.5;
-  if (rate <= 0.6) return 1.8;
-  return 2.5;
-}
+            $('#compression').text((rate * 100).toFixed(0) + '%');
+            $('#factor').text(factor);
+            $('#rawPrice').text('¥ ' + raw.toLocaleString());
+            $('#finalPrice').text('¥ ' + final.toLocaleString());
 
-function hoursBetween(now, future) {
-  return (future - now) / (1000 * 60 * 60);
-}
+            $('#quoteText').val(
+                `项目原定完成时间为 ${o.toLocaleString()}，
+现要求提前至 ${r.toLocaleString()} 完成，
+工期压缩 ${(rate * 100).toFixed(0)}%，
+按加急系数 ${factor} 计价。
 
-function calculate() {
-  const basePrice = parseFloat($('#basePrice').val());
-  const originalDeadline = $('#originalDeadline').val();
-  const rushDeadline = $('#rushDeadline').val();
+原报价 ¥${base.toLocaleString()}，
+最终加急报价为 ¥${final.toLocaleString()}。`
+            );
+        }
 
-  if (!basePrice || !originalDeadline || !rushDeadline) {
-    return;
-  }
+        $('.calc').on('input change', calculate);
 
-  const now = new Date();
-  const originalDate = new Date(originalDeadline);
-  const rushDate = new Date(rushDeadline);
-
-  if (rushDate >= originalDate || rushDate <= now || originalDate <= now) {
-    $('#explanation').text('请确保加急时间早于原定时间，且都晚于当前时间');
-    return;
-  }
-
-  const originalHours = hoursBetween(now, originalDate);
-  const rushHours = hoursBetween(now, rushDate);
-  const compression = (originalHours - rushHours) / originalHours;
-  const factor = getFactor(compression);
-  const total = basePrice * factor;
-
-  $('#originalHours').text(originalHours.toFixed(1));
-  $('#rushHours').text(rushHours.toFixed(1));
-  $('#compression').text((compression * 100).toFixed(0) + '%');
-  $('#factor').text(factor.toFixed(1));
-  $('#totalPrice').text('¥ ' + total.toLocaleString());
-
-  $('#explanation').text(
-    `原计划 ${originalHours.toFixed(1)} 小时完成，现压缩至 ${rushHours.toFixed(1)} 小时（压缩 ${(compression * 100).toFixed(0)}%），按加急系数 ${factor} 计价。`
-  );
-}
-
-$('.calc').on('input change', calculate);
-</script>
+        $('#copyBtn').click(function () {
+            $('#quoteText').select();
+            document.execCommand('copy');
+            alert('报价说明已复制');
+        });
+    </script>
 
 </body>
+
 </html>
