@@ -40,6 +40,18 @@
                 </div>
             </div>
 
+            <!-- 内容需求 -->
+            <div class="field">
+                <label class="label">内容需求</label>
+                <textarea class="textarea calc" id="contentReq" rows="3" placeholder="请简要描述需实现的功能或内容"></textarea>
+            </div>
+
+            <!-- 备注事项 -->
+            <div class="field">
+                <label class="label">备注事项</label>
+                <textarea class="textarea calc" id="notes" rows="2" placeholder="可填写特殊要求、交付方式等"></textarea>
+            </div>
+
             <!-- 原报价 -->
             <div class="field">
                 <label class="label">原报价（元）</label>
@@ -84,10 +96,12 @@
                 </p>
             </div>
 
+
+
             <!-- 报价说明 -->
             <div class="field">
                 <label class="label">报价说明（可复制）</label>
-                <textarea class="textarea" id="quoteText" rows="5" readonly></textarea>
+                <textarea class="textarea" id="quoteText" rows="7" readonly></textarea>
             </div>
 
             <button class="button is-link is-fullwidth" id="copyBtn">一键复制报价说明</button>
@@ -133,14 +147,16 @@
             $('#rawPrice').text('¥ ' + raw.toLocaleString());
             $('#finalPrice').text('¥ ' + final.toLocaleString());
 
-            $('#quoteText').val(
-                `项目原定完成时间为 ${o.toLocaleString()}，
-现要求提前至 ${r.toLocaleString()} 完成，
-工期压缩 ${(rate * 100).toFixed(0)}%，
-按加急系数 ${factor} 计价。
+            const content = ($('#contentReq').val() || '').toString().trim();
+            const notes = ($('#notes').val() || '').toString().trim();
 
-原报价 ¥${base.toLocaleString()}，
-最终加急报价为 ¥${final.toLocaleString()}。`
+            $('#quoteText').val(
+                `项目原定完成时间为 ${o.toLocaleString()}，\n` +
+                `现要求提前至 ${r.toLocaleString()} 完成，\n` +
+                `工期压缩 ${(rate * 100).toFixed(0)}%，按加急系数 ${factor} 计价。\n\n` +
+                `原报价 ¥${base.toLocaleString()}，最终加急报价为 ¥${final.toLocaleString()}。\n\n` +
+                `内容需求：${content || '无'}\n` +
+                `备注事项：${notes || '无'}`
             );
         }
 
