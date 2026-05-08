@@ -50,6 +50,23 @@
                 "average": 4.8,
                 "count": 600
             }
+        },
+        {
+            "id": 5,
+            "name": "蓝牙耳机",
+            "brand": "品牌E",
+            "price": 499.99,
+            "category": "音频设备",
+            "inStock": true,
+            "features": [
+                "降噪功能",
+                "长续航",
+                "无线充电"
+            ],
+            "ratings": {
+                "average": 4.6,
+                "count": 300
+            }
         }
     ]
 }
