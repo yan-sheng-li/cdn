@@ -193,6 +193,125 @@
       font-size: 12px;
       color: #777;
     }
+    /* 搜索面板 */
+    .search-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 2000;
+    }
+    .search-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 80%;
+      max-width: 300px;
+      background: #fff;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 2001;
+      display: flex;
+      flex-direction: column;
+    }
+    .search-panel.open {
+      transform: translateX(0);
+    }
+    .search-panel .search-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eee;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .search-panel .search-head .close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+    }
+    .search-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .search-input-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+    }
+    .search-input-row input:focus {
+      border-color: #3388ff;
+    }
+    .search-input-row button {
+      padding: 8px 14px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .search-input-row button:active {
+      background: #eee;
+    }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+    }
+    .search-result-item:active {
+      background: #f5f5f5;
+    }
+    .search-result-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+    .search-result-item .name {
+      font-size: 15px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .search-result-item .addr {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .search-result-item .fav-add {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      color: #3388ff;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 4px 10px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .search-empty {
+      text-align: center;
+      color: #999;
+      padding: 40px 16px;
+    }
   </style>
 </head>
 <body>
@@ -202,6 +321,7 @@
     <button @click="changeBase('satellite')">卫星图</button>
     <button @click="addFavorite">⭐ 收藏</button>
     <button @click="togglePanel">📋 列表</button>
+    <button @click="openSearch">🔍 搜索</button>
   </div>
   <div id="map"></div>
   <div class="weather-panel" id="weatherPanel">
@@ -226,6 +346,28 @@
     </ul>
     <p class="fav-empty" v-if="favorites.length === 0">暂无收藏</p>
   </aside>
+
+  <div class="search-overlay" v-if="showSearch" @click="showSearch = false"></div>
+  <aside class="search-panel" :class="{ open: showSearch }">
+    <div class="search-head">
+      <span>搜索地点</span>
+      <button class="close" @click="showSearch = false">×</button>
+    </div>
+    <div class="search-input-row">
+      <input v-model="searchKeyword" placeholder="输入关键词，如：天安门" @keyup.enter="searchPlaces" />
+      <button @click="searchPlaces">搜索</button>
+    </div>
+    <ul class="fav-list">
+      <li class="search-result-item" v-for="(item, index) in searchResults" :key="index" @click="gotoSearchResult(item)">
+        <div class="info">
+          <div class="name">{{ item.display_name.split(',')[0] }}</div>
+          <div class="addr">{{ item.display_name }}</div>
+        </div>
+        <button class="fav-add" @click.stop="favoriteFromResult(item)">收藏</button>
+      </li>
+    </ul>
+    <p class="search-empty" v-if="searchResults.length === 0">输入关键词搜索地点</p>
+  </aside>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -242,6 +384,10 @@ createApp({
     let locationCircle = null;
     const favorites = ref([]);
     const showPanel = ref(false);
+    const showSearch = ref(false);
+    const searchKeyword = ref('');
+    const searchResults = ref([]);
+    let searchMarker = null;
     const STORAGE_KEY = 'mapFavorites';
 
     const saveFavorites = () => {
@@ -265,6 +411,40 @@ createApp({
     };
     const togglePanel = () => {
       showPanel.value = !showPanel.value;
+    };
+
+    // ============ 地点搜索 ============
+    const openSearch = () => {
+      showSearch.value = true;
+    };
+    const searchPlaces = async () => {
+      const q = searchKeyword.value.trim();
+      if (!q) return;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&accept-language=zh`
+        );
+        searchResults.value = await res.json();
+      } catch (err) {
+        console.warn('搜索失败', err);
+        searchResults.value = [];
+      }
+    };
+    const gotoSearchResult = (item) => {
+      const lat = parseFloat(item.lat);
+      const lng = parseFloat(item.lon);
+      if (searchMarker) map.value.removeLayer(searchMarker);
+      searchMarker = L.marker([lat, lng]).addTo(map.value)
+        .bindPopup(item.display_name.split(',')[0]).openPopup();
+      map.value.flyTo([lat, lng], 16);
+      showSearch.value = false;
+    };
+    const favoriteFromResult = (item) => {
+      const name = prompt('请输入收藏名称', item.display_name.split(',')[0]);
+      if (name === null || name.trim() === '') return;
+      favorites.value.push({ name: name.trim(), lat: parseFloat(item.lat), lng: parseFloat(item.lon), ts: Date.now() });
+      saveFavorites();
+      alert('已收藏');
     };
 
     // ============ 天气 ============
@@ -381,7 +561,7 @@ createApp({
       baseLayers[type].addTo(map.value);
     };
 
-    return { changeBase, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel };
+    return { changeBase, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
   }
 }).mount('#app');
 </script>
