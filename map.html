@@ -21,6 +21,7 @@
     }
     #map {
       flex: 1;
+      margin-top: 60px;
     }
     .buttons {
       display: flex;
@@ -48,22 +49,61 @@
     .buttons button:active {
       background: #eee;
     }
-    /* 自定义定位按钮 */
-    .locate-button {
+    /* 图标工具行 */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(240,240,240,0.9);
+      border-bottom: 1px solid #ddd;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+    .toolbar .btn-icon {
       width: 44px;
       height: 44px;
+      flex: 0 0 auto;
+      min-width: 0;
+      padding: 0;
+      font-size: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       background: white;
-      border: 2px solid #ccc;
-      border-radius: 50%;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 20px;
     }
-    .locate-button:hover {
-      background: #f9f9f9;
+    .toolbar .btn-icon:active {
+      background: #eee;
+    }
+    .toolbar .spacer {
+      flex: 1;
+    }
+    .toolbar .btn-icon.tooltip {
+      position: relative;
+    }
+    .toolbar .btn-icon.tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    .toolbar .btn-icon.tooltip:hover::after {
+      opacity: 1;
     }
     /* 收藏侧滑面板 */
     .fav-overlay {
@@ -316,12 +356,12 @@
 </head>
 <body>
 <div id="app">
-  <div class="buttons">
-    <button @click="changeBase('osm')">街道图</button>
-    <button @click="changeBase('satellite')">卫星图</button>
-    <button @click="addFavorite">⭐ 收藏</button>
-    <button @click="togglePanel">📋 列表</button>
-    <button @click="openSearch">🔍 搜索</button>
+  <div class="toolbar">
+    <button class="btn-icon tooltip" data-tip="收藏当前中心点" @click="addFavorite">⭐</button>
+    <button class="btn-icon tooltip" data-tip="收藏列表" @click="togglePanel">📋</button>
+    <button class="btn-icon tooltip" data-tip="搜索地点" @click="openSearch">🔍</button>
+    <span class="spacer"></span>
+    <button class="btn-icon tooltip" data-tip="定位到我的位置" @click="locateMe">📍</button>
   </div>
   <div id="map"></div>
   <div class="weather-panel" id="weatherPanel">
@@ -516,19 +556,6 @@ createApp({
         { position: 'topright' }
       ).addTo(map.value);
 
-      // 定位控件
-      const locateControl = L.control({ position: 'bottomright' });
-      locateControl.onAdd = function () {
-        const div = L.DomUtil.create('div', 'locate-button');
-        div.innerHTML = "📍";
-        div.title = "定位到我的位置";
-        div.onclick = () => {
-          map.value.locate({ setView: true, maxZoom: 16 });
-        };
-        return div;
-      };
-      locateControl.addTo(map.value);
-
       // 定位成功
       map.value.on("locationfound", (e) => {
         if (locationMarker) map.value.removeLayer(locationMarker);
@@ -555,13 +582,12 @@ createApp({
       refreshWeather();
     });
 
-    // 切换底图
-    const changeBase = (type) => {
-      Object.values(baseLayers).forEach(layer => map.value.removeLayer(layer));
-      baseLayers[type].addTo(map.value);
+    // 定位
+    const locateMe = () => {
+      map.value.locate({ setView: true, maxZoom: 16 });
     };
 
-    return { changeBase, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
+    return { locateMe, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
   }
 }).mount('#app');
 </script>
