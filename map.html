@@ -92,7 +92,7 @@ createApp({
     onMounted(() => {
       // 初始化地图
       map.value = L.map('map', {
-        center: [47.413220, -1.219482],
+        center: [39.904200, 116.407400],
         zoom: 13,
         zoomControl: false
       });
@@ -145,7 +145,7 @@ createApp({
 
         locationMarker = L.marker(e.latlng).addTo(map.value)
           .bindPopup("你在这里").openPopup();
-        locationCircle = L.circle(e.latlng, { radius: e.accuracy, color: "blue", fillOpacity: 0.1 }).addTo(map.value);
+        locationCircle = L.circle(e.latlng, { radius: e.accuracy, color: "#3388ff", fillColor: "#3388ff", fillOpacity: 0.1 }).addTo(map.value);
       });
 
       // 定位失败
