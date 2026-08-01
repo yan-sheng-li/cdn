@@ -157,6 +157,42 @@
       color: #999;
       padding: 40px 16px;
     }
+    /* 天气浮层 */
+    .weather-panel {
+      position: fixed;
+      left: 12px;
+      bottom: 70px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #333;
+      max-width: 200px;
+      display: none;
+    }
+    .weather-panel.show {
+      display: block;
+    }
+    .weather-panel .w-temp {
+      font-size: 22px;
+      font-weight: bold;
+      color: #e53935;
+    }
+    .weather-panel .w-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .weather-panel .w-desc {
+      font-size: 14px;
+    }
+    .weather-panel .w-wind {
+      font-size: 12px;
+      color: #777;
+    }
   </style>
 </head>
 <body>
@@ -168,6 +204,10 @@
     <button @click="togglePanel">📋 列表</button>
   </div>
   <div id="map"></div>
+  <div class="weather-panel" id="weatherPanel">
+    <div class="w-row"><span class="w-temp" id="wTemp">--°</span><span class="w-desc" id="wDesc">--</span></div>
+    <div class="w-wind" id="wWind">风速：-- km/h</div>
+  </div>
 
   <div class="fav-overlay" v-if="showPanel" @click="showPanel = false"></div>
   <aside class="fav-panel" :class="{ open: showPanel }">
@@ -227,6 +267,38 @@ createApp({
       showPanel.value = !showPanel.value;
     };
 
+    // ============ 天气 ============
+    const WMO_CODES = {
+      0: '晴', 1: '大致晴朗', 2: '多云', 3: '阴天',
+      45: '雾', 48: '冻雾', 51: '毛毛雨', 53: '小毛毛雨', 55: '毛毛雨',
+      61: '小雨', 63: '中雨', 65: '大雨', 66: '冻雨', 67: '强冻雨',
+      71: '小雪', 73: '中雪', 75: '大雪', 77: '雪粒',
+      80: '小阵雨', 81: '中阵雨', 82: '强阵雨',
+      85: '小阵雪', 86: '大阵雪', 95: '雷暴', 96: '雷暴伴冰雹', 99: '强雷暴伴冰雹'
+    };
+    const wPanel = () => document.getElementById('weatherPanel');
+    const fetchWeather = async (lat, lng) => {
+      try {
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&timezone=Asia%2FShanghai`
+        );
+        const data = await res.json();
+        const w = data.current_weather;
+        if (!w) return;
+        document.getElementById('wTemp').textContent = Math.round(w.temperature) + '°C';
+        document.getElementById('wDesc').textContent = WMO_CODES[w.weathercode] || '未知';
+        document.getElementById('wWind').textContent = '风速：' + w.windspeed + ' km/h';
+        wPanel().classList.add('show');
+      } catch (err) {
+        console.warn('天气获取失败', err);
+      }
+    };
+    const refreshWeather = () => {
+      const c = map.value.getCenter();
+      fetchWeather(c.lat, c.lng);
+    };
+    let weatherTimer = null;
+
     onMounted(() => {
       // 初始化地图
       favorites.value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -285,12 +357,22 @@ createApp({
         locationMarker = L.marker(e.latlng).addTo(map.value)
           .bindPopup("你在这里").openPopup();
         locationCircle = L.circle(e.latlng, { radius: e.accuracy, color: "#3388ff", fillColor: "#3388ff", fillOpacity: 0.1 }).addTo(map.value);
+        fetchWeather(e.latlng.lat, e.latlng.lng);
       });
 
       // 定位失败
       map.value.on("locationerror", (e) => {
         alert("定位失败：" + e.message);
       });
+
+      // 地图中心移动时刷新天气（防抖）
+      map.value.on("moveend", () => {
+        clearTimeout(weatherTimer);
+        weatherTimer = setTimeout(refreshWeather, 800);
+      });
+
+      // 初始加载一次天气
+      refreshWeather();
     });
 
     // 切换底图
