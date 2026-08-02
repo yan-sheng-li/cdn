@@ -419,7 +419,6 @@ createApp({
   setup() {
     const map = ref(null);
     const baseLayers = {};
-    const overlayLayers = {};
     let locationMarker = null;
     let locationCircle = null;
     const favorites = ref([]);
@@ -528,20 +527,16 @@ createApp({
         zoomControl: false
       });
 
-      // 底图：街道图
-      baseLayers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+      // 底图：街道图（CartoDB Voyager，标注丰富）
+      baseLayers.osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
       });
 
       // 底图：卫星图
       baseLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
-      });
-
-      // 覆盖层：标注
-      overlayLayers.labels = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        opacity: 0.5
       });
 
       // 默认加载街道图
@@ -552,7 +547,7 @@ createApp({
       L.control.scale({ position: 'bottomleft', metric: true }).addTo(map.value);
       L.control.layers(
         { "街道图": baseLayers.osm, "卫星图": baseLayers.satellite },
-        { "标注": overlayLayers.labels },
+        null,
         { position: 'topright' }
       ).addTo(map.value);
 
