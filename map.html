@@ -360,6 +360,7 @@
     <button class="btn-icon tooltip" data-tip="收藏当前中心点" @click="addFavorite">⭐</button>
     <button class="btn-icon tooltip" data-tip="收藏列表" @click="togglePanel">📋</button>
     <button class="btn-icon tooltip" data-tip="搜索地点" @click="openSearch">🔍</button>
+    <button class="btn-icon tooltip" data-tip="设置地图 Key" @click="setCartoKey">🔑</button>
     <span class="spacer"></span>
     <button class="btn-icon tooltip" data-tip="定位到我的位置" @click="locateMe">📍</button>
   </div>
@@ -428,6 +429,27 @@ createApp({
     const searchResults = ref([]);
     let searchMarker = null;
     const STORAGE_KEY = 'mapFavorites';
+    const KEY_STORAGE = 'cartoKey';
+    const cartoKey = ref(localStorage.getItem(KEY_STORAGE) || '');
+    const cartoUrl = (k) => `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(k)}`;
+    let cartoWarned = false;
+
+    // 返回 true 表示拿到了有效 key
+    const askCartoKey = () => {
+      const input = prompt('请输入 CARTO API Key（basemaps.cartocdn.com 底图必需）', cartoKey.value);
+      if (input === null) return false;
+      const v = input.trim();
+      if (!v) return false;
+      cartoKey.value = v;
+      localStorage.setItem(KEY_STORAGE, v);
+      return true;
+    };
+    const setCartoKey = () => {
+      if (!askCartoKey()) return;
+      baseLayers.osm.setUrl(cartoUrl(cartoKey.value));
+      cartoWarned = false;
+      if (!map.value.hasLayer(baseLayers.osm)) baseLayers.osm.addTo(map.value);
+    };
 
     const saveFavorites = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites.value));
@@ -527,11 +549,19 @@ createApp({
         zoomControl: false
       });
 
-      // 底图：街道图（CartoDB Voyager，标注丰富）
-      baseLayers.osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      // 首次进入：没有本地 key 就要求输入
+      if (!cartoKey.value) askCartoKey();
+
+      // 底图：街道图（CartoDB Voyager，标注丰富，需要 key）
+      baseLayers.osm = L.tileLayer(cartoUrl(cartoKey.value), {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20
+      });
+      baseLayers.osm.on('tileerror', () => {
+        if (cartoWarned) return;
+        cartoWarned = true;
+        alert('街道图瓦片加载失败：Key 缺失或无效。点工具栏 🔑 重新输入。');
       });
 
       // 底图：卫星图
@@ -582,7 +612,7 @@ createApp({
       map.value.locate({ setView: true, maxZoom: 16 });
     };
 
-    return { locateMe, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
+    return { locateMe, setCartoKey, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
   }
 }).mount('#app');
 </script>
