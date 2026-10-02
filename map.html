@@ -360,6 +360,7 @@
     <button class="btn-icon tooltip" data-tip="收藏当前中心点" @click="addFavorite">⭐</button>
     <button class="btn-icon tooltip" data-tip="收藏列表" @click="togglePanel">📋</button>
     <button class="btn-icon tooltip" data-tip="搜索地点" @click="openSearch">🔍</button>
+    <button class="btn-icon tooltip" data-tip="设置地图 Key" @click="setCartoKey">🔑</button>
     <span class="spacer"></span>
     <button class="btn-icon tooltip" data-tip="定位到我的位置" @click="locateMe">📍</button>
   </div>
@@ -376,7 +377,7 @@
       <button class="close" @click="showPanel = false">×</button>
     </div>
     <ul class="fav-list">
-      <li class="fav-item" v-for="(item, index) in favorites" :key="index" @click="gotoFavorite(item)">
+      <li class="fav-item" v-for="(item, index) in favorites" :key="item.ts" @click="gotoFavorite(item)">
         <div class="info">
           <div class="name">{{ item.name }}</div>
           <div class="coords">{{ item.lat.toFixed(6) }}, {{ item.lng.toFixed(6) }}</div>
@@ -395,7 +396,7 @@
     </div>
     <div class="search-input-row">
       <input v-model="searchKeyword" placeholder="输入关键词，如：天安门" @keyup.enter="searchPlaces" />
-      <button @click="searchPlaces">搜索</button>
+      <button :disabled="searchLoading" @click="searchPlaces">{{ searchLoading ? '搜索中…' : '搜索' }}</button>
     </div>
     <ul class="fav-list">
       <li class="search-result-item" v-for="(item, index) in searchResults" :key="index" @click="gotoSearchResult(item)">
@@ -406,7 +407,8 @@
         <button class="fav-add" @click.stop="favoriteFromResult(item)">收藏</button>
       </li>
     </ul>
-    <p class="search-empty" v-if="searchResults.length === 0">输入关键词搜索地点</p>
+    <p class="search-empty" v-if="searchError">{{ searchError }}</p>
+    <p class="search-empty" v-else-if="searchResults.length === 0">输入关键词搜索地点</p>
   </aside>
 </div>
 
@@ -426,8 +428,34 @@ createApp({
     const showSearch = ref(false);
     const searchKeyword = ref('');
     const searchResults = ref([]);
+    const searchLoading = ref(false);
+    const searchError = ref('');
     let searchMarker = null;
     const STORAGE_KEY = 'mapFavorites';
+    const KEY_STORAGE = 'cartoKey';
+    const cartoKey = ref(localStorage.getItem(KEY_STORAGE) || '');
+    const cartoUrl = (k) => `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(k)}`;
+    // 没 key 时的免费备选底图，避免白屏
+    const FALLBACK_STREET = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+    const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a> / Tiles &copy; Esri';
+    let cartoWarned = false;
+
+    // 返回 true 表示拿到了有效 key
+    const askCartoKey = () => {
+      const input = prompt('请输入 CARTO API Key（basemaps.cartocdn.com 底图必需）', cartoKey.value);
+      if (input === null) return false;
+      const v = input.trim();
+      if (!v) return false;
+      cartoKey.value = v;
+      localStorage.setItem(KEY_STORAGE, v);
+      return true;
+    };
+    const setCartoKey = () => {
+      if (!askCartoKey()) return;
+      baseLayers.osm.setUrl(cartoUrl(cartoKey.value));
+      cartoWarned = false; // 用的还是同一个 layer 对象，只是换 url，不用动 layers 控件
+      if (!map.value.hasLayer(baseLayers.osm)) baseLayers.osm.addTo(map.value);
+    };
 
     const saveFavorites = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites.value));
@@ -458,15 +486,26 @@ createApp({
     };
     const searchPlaces = async () => {
       const q = searchKeyword.value.trim();
-      if (!q) return;
+      if (!q || searchLoading.value) return;
+      searchLoading.value = true;
+      searchError.value = '';
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&accept-language=zh`
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&accept-language=zh`,
+          { signal: ctrl.signal }
         );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         searchResults.value = await res.json();
+        if (searchResults.value.length === 0) searchError.value = '没有找到相关地点';
       } catch (err) {
         console.warn('搜索失败', err);
         searchResults.value = [];
+        searchError.value = err.name === 'AbortError' ? '请求超时，请重试' : '搜索失败，请检查网络';
+      } finally {
+        clearTimeout(timer);
+        searchLoading.value = false;
       }
     };
     const gotoSearchResult = (item) => {
@@ -512,26 +551,44 @@ createApp({
         console.warn('天气获取失败', err);
       }
     };
+    // 中心点几乎没动就别再请求（flyTo 落地、缩放都会触发 moveend）
+    let lastWeatherPos = null;
     const refreshWeather = () => {
       const c = map.value.getCenter();
+      if (lastWeatherPos && Math.abs(c.lat - lastWeatherPos.lat) < 0.01 && Math.abs(c.lng - lastWeatherPos.lng) < 0.01) return;
+      lastWeatherPos = { lat: c.lat, lng: c.lng };
       fetchWeather(c.lat, c.lng);
     };
     let weatherTimer = null;
 
     onMounted(() => {
       // 初始化地图
-      favorites.value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      // 旧数据可能缺 ts、坐标是字符串，统一规整，顺便补上列表 key
+      favorites.value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').map((f) => ({
+        name: String(f.name || '未命名'),
+        lat: Number(f.lat),
+        lng: Number(f.lng),
+        ts: f.ts || Date.now()
+      }));
       map.value = L.map('map', {
         center: [39.904200, 116.407400],
         zoom: 13,
         zoomControl: false
       });
 
-      // 底图：街道图（CartoDB Voyager，标注丰富）
-      baseLayers.osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+      // 首次进入：没有本地 key 就要求输入
+      if (!cartoKey.value) askCartoKey();
+
+      // 底图：街道图（CartoDB Voyager，标注丰富，需要 key）
+      baseLayers.osm = L.tileLayer(cartoKey.value ? cartoUrl(cartoKey.value) : FALLBACK_STREET, {
+        attribution: TILE_ATTR,
         subdomains: 'abcd',
         maxZoom: 20
+      });
+      baseLayers.osm.on('tileerror', () => {
+        if (cartoWarned) return;
+        cartoWarned = true;
+        alert('底图瓦片加载失败：检查网络，或点工具栏 🔑 更换 Key。');
       });
 
       // 底图：卫星图
@@ -582,7 +639,7 @@ createApp({
       map.value.locate({ setView: true, maxZoom: 16 });
     };
 
-    return { locateMe, favorites, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
+    return { locateMe, setCartoKey, favorites, searchLoading, searchError, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
   }
 }).mount('#app');
 </script>
