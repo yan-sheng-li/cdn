@@ -360,6 +360,9 @@
     <button class="btn-icon tooltip" data-tip="收藏当前中心点" @click="addFavorite">⭐</button>
     <button class="btn-icon tooltip" data-tip="收藏列表" @click="togglePanel">📋</button>
     <button class="btn-icon tooltip" data-tip="搜索地点" @click="openSearch">🔍</button>
+    <button class="btn-icon tooltip" data-tip="导入 GPX 轨迹" @click="triggerGpxImport">📁</button>
+    <button class="btn-icon tooltip" data-tip="查看轨迹信息" @click="showGpxInfo" v-if="hasGpx">📊</button>
+    <input type="file" id="gpxFileInput" accept=".gpx" style="display: none" @change="handleGpxFile" />
     <button class="btn-icon tooltip" data-tip="设置地图 Key" @click="setCartoKey">🔑</button>
     <span class="spacer"></span>
     <button class="btn-icon tooltip" data-tip="定位到我的位置" @click="locateMe">📍</button>
@@ -576,8 +579,8 @@ createApp({
         zoomControl: false
       });
 
-      // 首次进入：没有本地 key 就要求输入
-      if (!cartoKey.value) askCartoKey();
+      // 首次进入：无需强制输入 Key，用备选底图
+      // if (!cartoKey.value) askCartoKey();
 
       // 底图：街道图（CartoDB Voyager，标注丰富，需要 key）
       baseLayers.osm = L.tileLayer(cartoKey.value ? cartoUrl(cartoKey.value) : FALLBACK_STREET, {
@@ -639,7 +642,139 @@ createApp({
       map.value.locate({ setView: true, maxZoom: 16 });
     };
 
-    return { locateMe, setCartoKey, favorites, searchLoading, searchError, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult };
+    // ============ GPX 导入 ============
+    let gpxLayerGroup = null;
+    const hasGpx = ref(false);
+    let lastGpxSummary = '';
+    const triggerGpxImport = () => {
+      document.getElementById('gpxFileInput').click();
+    };
+    const showGpxInfo = () => {
+      if (lastGpxSummary) alert(lastGpxSummary);
+    };
+    const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    const formatDuration = (ms) => {
+      if (!ms || isNaN(ms)) return '未知';
+      const sec = Math.floor(ms / 1000);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) return `${h}小时${m}分`;
+      if (m > 0) return `${m}分${s}秒`;
+      return `${s}秒`;
+    };
+    const handleGpxFile = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(evt.target.result, "text/xml");
+          
+          if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+            throw new Error("GPX 解析错误：文件格式不正确");
+          }
+
+          const points = [];
+          let totalDistance = 0;
+          let totalElevationGain = 0;
+          let startTime = null;
+          let endTime = null;
+          let prevEle = null;
+
+          const trkpts = xmlDoc.getElementsByTagName("trkpt");
+          for (let i = 0; i < trkpts.length; i++) {
+            const pt = trkpts[i];
+            const lat = parseFloat(pt.getAttribute("lat"));
+            const lon = parseFloat(pt.getAttribute("lon"));
+            if (isNaN(lat) || isNaN(lon)) continue;
+
+            points.push([lat, lon]);
+
+            const eleEl = pt.getElementsByTagName("ele")[0];
+            const ele = eleEl ? parseFloat(eleEl.textContent) : null;
+
+            const timeEl = pt.getElementsByTagName("time")[0];
+            const time = timeEl ? new Date(timeEl.textContent).getTime() : null;
+
+            if (time) {
+              if (!startTime) startTime = time;
+              endTime = time;
+            }
+
+            if (i > 0) {
+              const prev = points[i - 1];
+              totalDistance += getDistanceFromLatLonInKm(prev[0], prev[1], lat, lon);
+
+              if (ele !== null && prevEle !== null) {
+                const diff = ele - prevEle;
+                if (diff > 0) totalElevationGain += diff;
+              }
+            }
+            if (ele !== null) prevEle = ele;
+          }
+
+          if (points.length === 0) {
+            const wpts = xmlDoc.getElementsByTagName("wpt");
+            for (let i = 0; i < wpts.length; i++) {
+              const lat = parseFloat(wpts[i].getAttribute("lat"));
+              const lon = parseFloat(wpts[i].getAttribute("lon"));
+              if (!isNaN(lat) && !isNaN(lon)) {
+                points.push([lat, lon]);
+              }
+            }
+          }
+
+          if (points.length === 0) {
+            alert("未能在 GPX 文件中找到有效的轨迹点");
+            return;
+          }
+
+          if (gpxLayerGroup) {
+            map.value.removeLayer(gpxLayerGroup);
+          }
+
+          let info = `【GPX 轨迹统计信息】\n点数: ${points.length}\n总距离: ${totalDistance.toFixed(2)} km`;
+          if (startTime && endTime && endTime > startTime) {
+            const durationMs = endTime - startTime;
+            const hours = durationMs / 3600000;
+            const avgSpeed = hours > 0 ? (totalDistance / hours).toFixed(1) : 0;
+            info += `\n耗时: ${formatDuration(durationMs)}\n均速: ${avgSpeed} km/h`;
+          }
+          if (totalElevationGain > 0) {
+            info += `\n累计爬升: ${Math.round(totalElevationGain)} m`;
+          }
+          lastGpxSummary = info;
+          hasGpx.value = true;
+
+          const polyline = L.polyline(points, { color: '#ff5722', weight: 4 });
+          polyline.on('click', () => {
+            showGpxInfo();
+          });
+          gpxLayerGroup = L.layerGroup([polyline]).addTo(map.value);
+          map.value.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+          alert(info);
+        } catch (err) {
+          console.error(err);
+          alert("导入失败：" + err.message);
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    return { locateMe, setCartoKey, favorites, searchLoading, searchError, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult, triggerGpxImport, handleGpxFile, hasGpx, showGpxInfo };
   }
 }).mount('#app');
 </script>
