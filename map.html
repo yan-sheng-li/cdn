@@ -361,6 +361,7 @@
     <button class="btn-icon tooltip" data-tip="收藏列表" @click="togglePanel">📋</button>
     <button class="btn-icon tooltip" data-tip="搜索地点" @click="openSearch">🔍</button>
     <button class="btn-icon tooltip" data-tip="导入 GPX 轨迹" @click="triggerGpxImport">📁</button>
+    <button class="btn-icon tooltip" data-tip="查看轨迹信息" @click="showGpxInfo" v-if="hasGpx">📊</button>
     <input type="file" id="gpxFileInput" accept=".gpx" style="display: none" @change="handleGpxFile" />
     <button class="btn-icon tooltip" data-tip="设置地图 Key" @click="setCartoKey">🔑</button>
     <span class="spacer"></span>
@@ -578,8 +579,8 @@ createApp({
         zoomControl: false
       });
 
-      // 首次进入：没有本地 key 就要求输入
-      if (!cartoKey.value) askCartoKey();
+      // 首次进入：无需强制输入 Key，用备选底图
+      // if (!cartoKey.value) askCartoKey();
 
       // 底图：街道图（CartoDB Voyager，标注丰富，需要 key）
       baseLayers.osm = L.tileLayer(cartoKey.value ? cartoUrl(cartoKey.value) : FALLBACK_STREET, {
@@ -643,8 +644,13 @@ createApp({
 
     // ============ GPX 导入 ============
     let gpxLayerGroup = null;
+    const hasGpx = ref(false);
+    let lastGpxSummary = '';
     const triggerGpxImport = () => {
       document.getElementById('gpxFileInput').click();
+    };
+    const showGpxInfo = () => {
+      if (lastGpxSummary) alert(lastGpxSummary);
     };
     const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
       const R = 6371;
@@ -738,11 +744,7 @@ createApp({
             map.value.removeLayer(gpxLayerGroup);
           }
 
-          const polyline = L.polyline(points, { color: '#ff5722', weight: 4 });
-          gpxLayerGroup = L.layerGroup([polyline]).addTo(map.value);
-          map.value.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-
-          let info = `【GPX 轨迹导入成功】\n点数: ${points.length}\n总距离: ${totalDistance.toFixed(2)} km`;
+          let info = `【GPX 轨迹统计信息】\n点数: ${points.length}\n总距离: ${totalDistance.toFixed(2)} km`;
           if (startTime && endTime && endTime > startTime) {
             const durationMs = endTime - startTime;
             const hours = durationMs / 3600000;
@@ -752,6 +754,15 @@ createApp({
           if (totalElevationGain > 0) {
             info += `\n累计爬升: ${Math.round(totalElevationGain)} m`;
           }
+          lastGpxSummary = info;
+          hasGpx.value = true;
+
+          const polyline = L.polyline(points, { color: '#ff5722', weight: 4 });
+          polyline.on('click', () => {
+            showGpxInfo();
+          });
+          gpxLayerGroup = L.layerGroup([polyline]).addTo(map.value);
+          map.value.fitBounds(polyline.getBounds(), { padding: [50, 50] });
           alert(info);
         } catch (err) {
           console.error(err);
@@ -763,7 +774,7 @@ createApp({
       reader.readAsText(file);
     };
 
-    return { locateMe, setCartoKey, favorites, searchLoading, searchError, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult, triggerGpxImport, handleGpxFile };
+    return { locateMe, setCartoKey, favorites, searchLoading, searchError, showPanel, addFavorite, gotoFavorite, removeFavorite, togglePanel, showSearch, searchKeyword, searchResults, openSearch, searchPlaces, gotoSearchResult, favoriteFromResult, triggerGpxImport, handleGpxFile, hasGpx, showGpxInfo };
   }
 }).mount('#app');
 </script>
